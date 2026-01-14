@@ -1,4 +1,4 @@
-import { SalaryBreakdown, Deductions, TaxResult } from './types';
+import { SalaryBreakdown, Deductions, TaxResult, SalaryExemptions, ChapterVIADeductions } from './types';
 
 // New Tax Regime Slabs for AY 2026-27 (FY 2025-26) as per Finance Act 2025
 const NEW_REGIME_SLABS = [
@@ -26,14 +26,40 @@ const NEW_REGIME_REBATE_LIMIT = 1200000; // Rebate u/s 87A for income up to 12L
 const OLD_REGIME_REBATE_LIMIT = 500000; // Rebate u/s 87A for income up to 5L
 
 export function calculateGrossIncome(salary: SalaryBreakdown): number {
-  return (
-    salary.basicSalary +
-    salary.hra +
-    salary.specialAllowance +
-    salary.lta +
-    salary.otherAllowances +
-    salary.bonus
-  );
+  // Section 17(1)
+  const section17_1_total = 
+    salary.section17_1.basicSalary +
+    salary.section17_1.dearnessAllowance +
+    salary.section17_1.conveyanceAllowance +
+    salary.section17_1.medicalAllowance +
+    salary.section17_1.otherAllowances;
+
+  // Special Allowances
+  const specialAllowances_total =
+    salary.specialAllowances.hra +
+    salary.specialAllowances.lta +
+    salary.specialAllowances.leaveEncashment +
+    salary.specialAllowances.mealAllowance +
+    salary.specialAllowances.uniformAllowance +
+    salary.specialAllowances.otherSpecialAllowances;
+
+  // Section 17(2)
+  const section17_2_total =
+    salary.section17_2.rentFreeAccommodation +
+    salary.section17_2.motorCarProvided +
+    salary.section17_2.freeEducation +
+    salary.section17_2.interestFreeLoans +
+    salary.section17_2.otherPerquisites;
+
+  // Section 17(3)
+  const section17_3_total =
+    salary.section17_3.bonus +
+    salary.section17_3.commission +
+    salary.section17_3.retirementBenefits +
+    salary.section17_3.exGratia +
+    salary.section17_3.otherProfits;
+
+  return section17_1_total + specialAllowances_total + section17_2_total + section17_3_total;
 }
 
 function calculateTaxFromSlabs(taxableIncome: number, slabs: typeof NEW_REGIME_SLABS): number {
@@ -51,11 +77,14 @@ function calculateTaxFromSlabs(taxableIncome: number, slabs: typeof NEW_REGIME_S
   return tax;
 }
 
-export function calculateNewRegimeTax(salary: SalaryBreakdown): TaxResult {
+export function calculateNewRegimeTax(salary: SalaryBreakdown, deductions: Deductions): TaxResult {
   const grossIncome = calculateGrossIncome(salary);
   
-  // New regime only allows standard deduction
-  const totalDeductions = NEW_REGIME_STANDARD_DEDUCTION;
+  // New regime allows: Standard Deduction + 80CCD(2) employer NPS contribution
+  const standardDeduction = NEW_REGIME_STANDARD_DEDUCTION;
+  const employerNPS = deductions.chapterVIA.section80CCD2;
+  const totalDeductions = standardDeduction + employerNPS;
+  
   const taxableIncome = Math.max(0, grossIncome - totalDeductions);
   
   let taxBeforeCess = calculateTaxFromSlabs(taxableIncome, NEW_REGIME_SLABS);
@@ -79,23 +108,62 @@ export function calculateNewRegimeTax(salary: SalaryBreakdown): TaxResult {
     totalTax,
     effectiveTaxRate,
     netIncome,
+    deductionBreakdown: {
+      salaryExemptions: 0,
+      chapterVIA: employerNPS,
+      standardDeduction,
+    }
   };
+}
+
+export function calculateSalaryExemptionsTotal(exemptions: SalaryExemptions): number {
+  return (
+    exemptions.hraExemption +
+    exemptions.ltaExemption +
+    exemptions.gratuityExemption +
+    exemptions.leaveEncashmentExemption +
+    exemptions.professionalTax +
+    exemptions.entertainmentAllowance
+  );
+}
+
+export function calculateChapterVIATotal(deductions: ChapterVIADeductions): number {
+  const section80C = Math.min(deductions.section80C + deductions.section80CCD1, 150000);
+  const section80CCD1B = Math.min(deductions.section80CCD1B, 50000);
+  const section80CCD2 = deductions.section80CCD2; // No limit, based on salary
+  const section80D = Math.min(deductions.section80D_self, 50000) + Math.min(deductions.section80D_parents, 50000);
+  const section80E = deductions.section80E; // No limit
+  const section80G = deductions.section80G;
+  const section80GG = Math.min(deductions.section80GG, 60000);
+  const section80TTA = Math.min(deductions.section80TTA, 10000); // 80TTB for seniors is 50K
+  const section80U = Math.min(deductions.section80U, 125000);
+
+  return (
+    section80C +
+    section80CCD1B +
+    section80CCD2 +
+    section80D +
+    section80E +
+    section80G +
+    section80GG +
+    section80TTA +
+    section80U
+  );
 }
 
 export function calculateOldRegimeTax(salary: SalaryBreakdown, deductions: Deductions): TaxResult {
   const grossIncome = calculateGrossIncome(salary);
   
-  // Calculate total deductions under old regime
-  const totalDeductions =
-    Math.min(deductions.section80C, 150000) +
-    Math.min(deductions.section80D, 75000) + // Max for self + parents (senior)
-    Math.min(deductions.section80CCD1B, 50000) +
-    deductions.section80E + // No limit on 80E
-    deductions.section80G +
-    deductions.hraExemption +
-    deductions.professionalTax +
-    OLD_REGIME_STANDARD_DEDUCTION;
+  // Calculate salary exemptions
+  const salaryExemptionsTotal = calculateSalaryExemptionsTotal(deductions.exemptions);
+  
+  // Calculate Chapter VI-A deductions
+  const chapterVIATotal = calculateChapterVIATotal(deductions.chapterVIA);
+  
+  // Standard deduction
+  const standardDeduction = OLD_REGIME_STANDARD_DEDUCTION;
 
+  const totalDeductions = salaryExemptionsTotal + chapterVIATotal + standardDeduction;
   const taxableIncome = Math.max(0, grossIncome - totalDeductions);
   
   let taxBeforeCess = calculateTaxFromSlabs(taxableIncome, OLD_REGIME_SLABS);
@@ -119,6 +187,11 @@ export function calculateOldRegimeTax(salary: SalaryBreakdown, deductions: Deduc
     totalTax,
     effectiveTaxRate,
     netIncome,
+    deductionBreakdown: {
+      salaryExemptions: salaryExemptionsTotal,
+      chapterVIA: chapterVIATotal,
+      standardDeduction,
+    }
   };
 }
 
