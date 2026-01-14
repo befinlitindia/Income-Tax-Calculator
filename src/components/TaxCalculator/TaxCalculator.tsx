@@ -1,38 +1,82 @@
 import React, { useState, useMemo } from 'react';
-import { SalaryBreakdown, Deductions } from './types';
+import { SalaryBreakdown, Deductions, SalaryExemptions, ChapterVIADeductions } from './types';
 import { calculateNewRegimeTax, calculateOldRegimeTax, formatCurrency } from './taxUtils';
 import { SalarySection } from './SalarySection';
-import { DeductionsSection } from './DeductionsSection';
+import { ExemptionsSection } from './ExemptionsSection';
+import { ChapterVIASection } from './ChapterVIASection';
 import { TaxComparison } from './TaxComparison';
 import { Suggestions } from './Suggestions';
 import { Calculator, IndianRupee, Scale, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const initialSalary: SalaryBreakdown = {
-  basicSalary: 0,
-  hra: 0,
-  specialAllowance: 0,
-  lta: 0,
-  otherAllowances: 0,
-  bonus: 0,
+  section17_1: {
+    basicSalary: 0,
+    dearnessAllowance: 0,
+    conveyanceAllowance: 0,
+    medicalAllowance: 0,
+    otherAllowances: 0,
+  },
+  specialAllowances: {
+    leaveEncashment: 0,
+    lta: 0,
+    hra: 0,
+    mealAllowance: 0,
+    uniformAllowance: 0,
+    otherSpecialAllowances: 0,
+  },
+  section17_2: {
+    rentFreeAccommodation: 0,
+    motorCarProvided: 0,
+    freeEducation: 0,
+    interestFreeLoans: 0,
+    otherPerquisites: 0,
+  },
+  section17_3: {
+    bonus: 0,
+    commission: 0,
+    retirementBenefits: 0,
+    exGratia: 0,
+    otherProfits: 0,
+  },
+};
+
+const initialExemptions: SalaryExemptions = {
+  hraExemption: 0,
+  rentPaid: 0,
+  isMetroCity: false,
+  ltaExemption: 0,
+  gratuityExemption: 0,
+  leaveEncashmentExemption: 0,
+  standardDeduction: 50000,
+  professionalTax: 0,
+  entertainmentAllowance: 0,
+};
+
+const initialChapterVIA: ChapterVIADeductions = {
+  section80C: 0,
+  section80CCD1: 0,
+  section80CCD1B: 0,
+  section80CCD2: 0,
+  section80D_self: 0,
+  section80D_parents: 0,
+  section80E: 0,
+  section80G: 0,
+  section80GG: 0,
+  section80TTA: 0,
+  section80U: 0,
 };
 
 const initialDeductions: Deductions = {
-  section80C: 0,
-  section80D: 0,
-  section80CCD1B: 0,
-  section80E: 0,
-  section80G: 0,
-  hraExemption: 0,
-  professionalTax: 0,
-  standardDeduction: 50000,
+  exemptions: initialExemptions,
+  chapterVIA: initialChapterVIA,
 };
 
 export const TaxCalculator: React.FC = () => {
   const [salary, setSalary] = useState<SalaryBreakdown>(initialSalary);
   const [deductions, setDeductions] = useState<Deductions>(initialDeductions);
 
-  const newRegimeResult = useMemo(() => calculateNewRegimeTax(salary), [salary]);
+  const newRegimeResult = useMemo(() => calculateNewRegimeTax(salary, deductions), [salary, deductions]);
   const oldRegimeResult = useMemo(() => calculateOldRegimeTax(salary, deductions), [salary, deductions]);
 
   const handleReset = () => {
@@ -40,7 +84,20 @@ export const TaxCalculator: React.FC = () => {
     setDeductions(initialDeductions);
   };
 
-  const totalSalary = Object.values(salary).reduce((sum, val) => sum + val, 0);
+  const updateExemptions = (exemptions: SalaryExemptions) => {
+    setDeductions(prev => ({ ...prev, exemptions }));
+  };
+
+  const updateChapterVIA = (chapterVIA: ChapterVIADeductions) => {
+    setDeductions(prev => ({ ...prev, chapterVIA }));
+  };
+
+  // Calculate total salary from all sections
+  const totalSalary = 
+    Object.values(salary.section17_1).reduce((sum, val) => sum + val, 0) +
+    Object.values(salary.specialAllowances).reduce((sum, val) => sum + val, 0) +
+    Object.values(salary.section17_2).reduce((sum, val) => sum + val, 0) +
+    Object.values(salary.section17_3).reduce((sum, val) => sum + val, 0);
 
   return (
     <div className="min-h-screen bg-background">
@@ -59,10 +116,6 @@ export const TaxCalculator: React.FC = () => {
           </p>
           <div className="flex items-center gap-6 mt-6 flex-wrap">
             <div className="flex items-center gap-2 text-white/70 text-sm">
-              <IndianRupee className="w-4 h-4" />
-              <span>For Salaried Individuals</span>
-            </div>
-            <div className="flex items-center gap-2 text-white/70 text-sm">
               <Scale className="w-4 h-4" />
               <span>Based on Income Tax Act, 1961</span>
             </div>
@@ -76,7 +129,7 @@ export const TaxCalculator: React.FC = () => {
           <div className="card-elevated p-6">
             <h2 className="font-display font-semibold text-xl mb-3">About This Calculator</h2>
             <p className="text-muted-foreground leading-relaxed">
-              This Income Tax Calculator helps salaried individuals compare their tax liability under both the 
+              This Income Tax Calculator helps you compare tax liability under both the 
               <strong className="text-foreground"> Old Tax Regime</strong> (with deductions and exemptions) and the 
               <strong className="text-foreground"> New Tax Regime</strong> (simplified slabs without most deductions) 
               for AY 2026-27. The New Regime under Finance Act 2025 offers revised tax slabs with a basic exemption 
@@ -124,10 +177,20 @@ export const TaxCalculator: React.FC = () => {
             </div>
           )}
 
-          {/* Input Sections */}
+          {/* Salary Section */}
+          <SalarySection salary={salary} onChange={setSalary} />
+
+          {/* Deductions - Exemptions first, then Chapter VI-A */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <SalarySection salary={salary} onChange={setSalary} />
-            <DeductionsSection deductions={deductions} onChange={setDeductions} />
+            <ExemptionsSection 
+              exemptions={deductions.exemptions} 
+              salary={salary}
+              onChange={updateExemptions} 
+            />
+            <ChapterVIASection 
+              deductions={deductions.chapterVIA} 
+              onChange={updateChapterVIA} 
+            />
           </div>
 
           {/* Reset Button */}

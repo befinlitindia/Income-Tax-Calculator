@@ -13,8 +13,8 @@ export const Suggestions: React.FC<SuggestionsProps> = ({ oldRegime, newRegime, 
   const suggestions: Array<{ icon: React.ReactNode; title: string; description: string; impact?: string }> = [];
 
   // Check 80C utilization
-  if (deductions.section80C < 150000) {
-    const remaining = 150000 - deductions.section80C;
+  if (deductions.chapterVIA.section80C < 150000) {
+    const remaining = 150000 - deductions.chapterVIA.section80C;
     suggestions.push({
       icon: <Coins className="w-5 h-5" />,
       title: "Maximize Section 80C Investments",
@@ -24,17 +24,18 @@ export const Suggestions: React.FC<SuggestionsProps> = ({ oldRegime, newRegime, 
   }
 
   // Check 80CCD(1B) utilization
-  if (deductions.section80CCD1B < 50000) {
+  if (deductions.chapterVIA.section80CCD1B < 50000) {
     suggestions.push({
       icon: <TrendingUp className="w-5 h-5" />,
       title: "Consider NPS Investment",
       description: "Invest up to ₹50,000 in NPS to claim additional deduction under Section 80CCD(1B). This is over and above the 80C limit.",
-      impact: `Potential savings: ${formatCurrency((50000 - deductions.section80CCD1B) * 0.3)}`,
+      impact: `Potential savings: ${formatCurrency((50000 - deductions.chapterVIA.section80CCD1B) * 0.3)}`,
     });
   }
 
   // Check Health Insurance
-  if (deductions.section80D < 25000) {
+  const total80D = deductions.chapterVIA.section80D_self + deductions.chapterVIA.section80D_parents;
+  if (total80D < 25000) {
     suggestions.push({
       icon: <Shield className="w-5 h-5" />,
       title: "Get Health Insurance Coverage",
@@ -54,7 +55,7 @@ export const Suggestions: React.FC<SuggestionsProps> = ({ oldRegime, newRegime, 
   }
 
   // HRA suggestion
-  if (deductions.hraExemption === 0 && oldRegime.grossIncome > 500000) {
+  if (deductions.exemptions.hraExemption === 0 && oldRegime.grossIncome > 500000) {
     suggestions.push({
       icon: <Building className="w-5 h-5" />,
       title: "Claim HRA Exemption",

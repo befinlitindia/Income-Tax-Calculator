@@ -1,7 +1,9 @@
 import React from 'react';
 import { TaxResult } from './types';
 import { formatCurrency } from './taxUtils';
-import { TrendingDown, TrendingUp, Scale, CheckCircle } from 'lucide-react';
+import { Scale, CheckCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { useState } from 'react';
 
 interface TaxComparisonProps {
   oldRegime: TaxResult;
@@ -9,9 +11,14 @@ interface TaxComparisonProps {
 }
 
 export const TaxComparison: React.FC<TaxComparisonProps> = ({ oldRegime, newRegime }) => {
+  const [oldDeductionsOpen, setOldDeductionsOpen] = useState(false);
   const savings = oldRegime.totalTax - newRegime.totalTax;
   const betterRegime = savings > 0 ? 'new' : savings < 0 ? 'old' : 'same';
   const absoluteSavings = Math.abs(savings);
+
+  // Calculate monthly in-hand
+  const oldMonthlyInHand = Math.round(oldRegime.netIncome / 12);
+  const newMonthlyInHand = Math.round(newRegime.netIncome / 12);
 
   return (
     <div className="animate-slide-up" style={{ animationDelay: '0.2s' }}>
@@ -41,7 +48,7 @@ export const TaxComparison: React.FC<TaxComparisonProps> = ({ oldRegime, newRegi
               </h3>
               {betterRegime !== 'same' && (
                 <p className="text-muted-foreground text-sm">
-                  You save {formatCurrency(absoluteSavings)} annually
+                  You save {formatCurrency(absoluteSavings)} annually ({formatCurrency(Math.round(absoluteSavings / 12))}/month)
                 </p>
               )}
             </div>
@@ -79,10 +86,38 @@ export const TaxComparison: React.FC<TaxComparisonProps> = ({ oldRegime, newRegi
               <span className="text-muted-foreground">Gross Income</span>
               <span className="font-medium">{formatCurrency(oldRegime.grossIncome)}</span>
             </div>
-            <div className="flex justify-between items-center py-2 border-b border-border">
-              <span className="text-muted-foreground">Total Deductions</span>
-              <span className="font-medium text-accent">- {formatCurrency(oldRegime.totalDeductions)}</span>
-            </div>
+            
+            {/* Deduction Breakdown */}
+            <Collapsible open={oldDeductionsOpen} onOpenChange={setOldDeductionsOpen}>
+              <CollapsibleTrigger className="flex justify-between items-center py-2 border-b border-border w-full hover:bg-muted/30 -mx-1 px-1 rounded transition-colors">
+                <span className="text-muted-foreground flex items-center gap-2">
+                  Total Deductions
+                  {oldDeductionsOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                </span>
+                <span className="font-medium text-accent">- {formatCurrency(oldRegime.totalDeductions)}</span>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="pt-2 pb-2">
+                <div className="bg-muted/30 rounded-lg p-3 space-y-2 text-sm">
+                  {oldRegime.deductionBreakdown && (
+                    <>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Standard Deduction</span>
+                        <span>{formatCurrency(oldRegime.deductionBreakdown.standardDeduction)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Salary Exemptions</span>
+                        <span>{formatCurrency(oldRegime.deductionBreakdown.salaryExemptions)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Chapter VI-A</span>
+                        <span>{formatCurrency(oldRegime.deductionBreakdown.chapterVIA)}</span>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+
             <div className="flex justify-between items-center py-2 border-b border-border">
               <span className="text-muted-foreground">Taxable Income</span>
               <span className="font-medium">{formatCurrency(oldRegime.taxableIncome)}</span>
@@ -104,8 +139,8 @@ export const TaxComparison: React.FC<TaxComparisonProps> = ({ oldRegime, newRegi
               <span className="font-medium">{oldRegime.effectiveTaxRate.toFixed(2)}%</span>
             </div>
             <div className="flex justify-between items-center py-3 bg-amber-50 px-3 rounded-lg">
-              <span className="font-medium">Net In-Hand (Annual)</span>
-              <span className="font-display font-bold text-lg">{formatCurrency(oldRegime.netIncome)}</span>
+              <span className="font-medium">Monthly In-Hand</span>
+              <span className="font-display font-bold text-lg">{formatCurrency(oldMonthlyInHand)}</span>
             </div>
           </div>
         </div>
@@ -130,9 +165,23 @@ export const TaxComparison: React.FC<TaxComparisonProps> = ({ oldRegime, newRegi
               <span className="font-medium">{formatCurrency(newRegime.grossIncome)}</span>
             </div>
             <div className="flex justify-between items-center py-2 border-b border-border">
-              <span className="text-muted-foreground">Standard Deduction</span>
+              <span className="text-muted-foreground">Total Deductions</span>
               <span className="font-medium text-accent">- {formatCurrency(newRegime.totalDeductions)}</span>
             </div>
+            {newRegime.deductionBreakdown && newRegime.totalDeductions > 0 && (
+              <div className="bg-muted/30 rounded-lg p-3 space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Standard Deduction</span>
+                  <span>{formatCurrency(newRegime.deductionBreakdown.standardDeduction)}</span>
+                </div>
+                {newRegime.deductionBreakdown.chapterVIA > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">80CCD(2) - Employer NPS</span>
+                    <span>{formatCurrency(newRegime.deductionBreakdown.chapterVIA)}</span>
+                  </div>
+                )}
+              </div>
+            )}
             <div className="flex justify-between items-center py-2 border-b border-border">
               <span className="text-muted-foreground">Taxable Income</span>
               <span className="font-medium">{formatCurrency(newRegime.taxableIncome)}</span>
@@ -154,8 +203,8 @@ export const TaxComparison: React.FC<TaxComparisonProps> = ({ oldRegime, newRegi
               <span className="font-medium">{newRegime.effectiveTaxRate.toFixed(2)}%</span>
             </div>
             <div className="flex justify-between items-center py-3 bg-emerald-50 px-3 rounded-lg">
-              <span className="font-medium">Net In-Hand (Annual)</span>
-              <span className="font-display font-bold text-lg">{formatCurrency(newRegime.netIncome)}</span>
+              <span className="font-medium">Monthly In-Hand</span>
+              <span className="font-display font-bold text-lg">{formatCurrency(newMonthlyInHand)}</span>
             </div>
           </div>
         </div>
