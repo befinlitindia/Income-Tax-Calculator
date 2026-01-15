@@ -6,6 +6,7 @@ import { ExemptionsSection } from './ExemptionsSection';
 import { ChapterVIASection } from './ChapterVIASection';
 import { TaxComparison } from './TaxComparison';
 import { Suggestions } from './Suggestions';
+import { Compliances } from './Compliances';
 import { Calculator, IndianRupee, Scale, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -214,6 +215,7 @@ export const TaxCalculator: React.FC = () => {
             <>
               <TaxComparison oldRegime={oldRegimeResult} newRegime={newRegimeResult} />
               <Suggestions oldRegime={oldRegimeResult} newRegime={newRegimeResult} deductions={deductions} />
+              <Compliances />
             </>
           )}
         </div>
