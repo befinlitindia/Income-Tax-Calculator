@@ -25,6 +25,73 @@ const OLD_REGIME_STANDARD_DEDUCTION = 50000;
 const NEW_REGIME_REBATE_LIMIT = 1200000; // Rebate u/s 87A for income up to 12L
 const OLD_REGIME_REBATE_LIMIT = 500000; // Rebate u/s 87A for income up to 5L
 
+// Surcharge thresholds
+const SURCHARGE_50L = 5000000;
+const SURCHARGE_1CR = 10000000;
+const SURCHARGE_2CR = 20000000;
+const SURCHARGE_5CR = 50000000;
+
+// Surcharge rates for Old Regime
+const OLD_REGIME_SURCHARGE_RATES = [
+  { threshold: SURCHARGE_5CR, rate: 0.37 },
+  { threshold: SURCHARGE_2CR, rate: 0.25 },
+  { threshold: SURCHARGE_1CR, rate: 0.15 },
+  { threshold: SURCHARGE_50L, rate: 0.10 },
+];
+
+// Surcharge rates for New Regime (capped at 25%)
+const NEW_REGIME_SURCHARGE_RATES = [
+  { threshold: SURCHARGE_2CR, rate: 0.25 },
+  { threshold: SURCHARGE_1CR, rate: 0.15 },
+  { threshold: SURCHARGE_50L, rate: 0.10 },
+];
+
+// Calculate surcharge with marginal relief
+function calculateSurcharge(
+  taxableIncome: number,
+  taxBeforeSurcharge: number,
+  slabs: typeof NEW_REGIME_SLABS,
+  surchargeRates: typeof OLD_REGIME_SURCHARGE_RATES
+): number {
+  if (taxableIncome <= SURCHARGE_50L) {
+    return 0;
+  }
+
+  // Find applicable surcharge rate
+  let applicableRate = 0;
+  let applicableThreshold = 0;
+  
+  for (const { threshold, rate } of surchargeRates) {
+    if (taxableIncome > threshold) {
+      applicableRate = rate;
+      applicableThreshold = threshold;
+      break;
+    }
+  }
+
+  if (applicableRate === 0) {
+    return 0;
+  }
+
+  // Calculate surcharge
+  const surcharge = taxBeforeSurcharge * applicableRate;
+
+  // Apply marginal relief
+  // Tax + Surcharge should not exceed Tax at threshold + Excess income above threshold
+  const taxAtThreshold = calculateTaxFromSlabs(applicableThreshold, slabs);
+  const excessIncome = taxableIncome - applicableThreshold;
+  const maxTaxWithSurcharge = taxAtThreshold + excessIncome;
+  
+  const taxWithSurcharge = taxBeforeSurcharge + surcharge;
+  
+  if (taxWithSurcharge > maxTaxWithSurcharge) {
+    // Marginal relief applies
+    return Math.max(0, maxTaxWithSurcharge - taxBeforeSurcharge);
+  }
+
+  return surcharge;
+}
+
 export function calculateGrossIncome(salary: SalaryBreakdown): number {
   // Section 17(1)
   const section17_1_total = 
@@ -87,15 +154,19 @@ export function calculateNewRegimeTax(salary: SalaryBreakdown, deductions: Deduc
   
   const taxableIncome = Math.max(0, grossIncome - totalDeductions);
   
-  let taxBeforeCess = calculateTaxFromSlabs(taxableIncome, NEW_REGIME_SLABS);
+  let taxBeforeSurcharge = calculateTaxFromSlabs(taxableIncome, NEW_REGIME_SLABS);
   
   // Apply rebate u/s 87A for income up to 12 lakh
   if (taxableIncome <= NEW_REGIME_REBATE_LIMIT) {
-    taxBeforeCess = 0;
+    taxBeforeSurcharge = 0;
   }
+
+  // Calculate surcharge (New Regime - max 25%)
+  const surcharge = calculateSurcharge(taxableIncome, taxBeforeSurcharge, NEW_REGIME_SLABS, NEW_REGIME_SURCHARGE_RATES);
+  const taxAfterSurcharge = taxBeforeSurcharge + surcharge;
   
-  const cess = taxBeforeCess * CESS_RATE;
-  const totalTax = taxBeforeCess + cess;
+  const cess = taxAfterSurcharge * CESS_RATE;
+  const totalTax = taxAfterSurcharge + cess;
   const effectiveTaxRate = grossIncome > 0 ? (totalTax / grossIncome) * 100 : 0;
   const netIncome = grossIncome - totalTax;
 
@@ -103,7 +174,9 @@ export function calculateNewRegimeTax(salary: SalaryBreakdown, deductions: Deduc
     grossIncome,
     totalDeductions,
     taxableIncome,
-    taxBeforeCess,
+    taxBeforeSurcharge,
+    surcharge,
+    taxAfterSurcharge,
     cess,
     totalTax,
     effectiveTaxRate,
@@ -188,15 +261,19 @@ export function calculateOldRegimeTax(salary: SalaryBreakdown, deductions: Deduc
   const totalDeductions = salaryExemptionsTotal + chapterVIATotal + standardDeduction;
   const taxableIncome = Math.max(0, grossIncome - totalDeductions);
   
-  let taxBeforeCess = calculateTaxFromSlabs(taxableIncome, OLD_REGIME_SLABS);
+  let taxBeforeSurcharge = calculateTaxFromSlabs(taxableIncome, OLD_REGIME_SLABS);
   
   // Apply rebate u/s 87A for income up to 5 lakh
   if (taxableIncome <= OLD_REGIME_REBATE_LIMIT) {
-    taxBeforeCess = 0;
+    taxBeforeSurcharge = 0;
   }
+
+  // Calculate surcharge (Old Regime - up to 37%)
+  const surcharge = calculateSurcharge(taxableIncome, taxBeforeSurcharge, OLD_REGIME_SLABS, OLD_REGIME_SURCHARGE_RATES);
+  const taxAfterSurcharge = taxBeforeSurcharge + surcharge;
   
-  const cess = taxBeforeCess * CESS_RATE;
-  const totalTax = taxBeforeCess + cess;
+  const cess = taxAfterSurcharge * CESS_RATE;
+  const totalTax = taxAfterSurcharge + cess;
   const effectiveTaxRate = grossIncome > 0 ? (totalTax / grossIncome) * 100 : 0;
   const netIncome = grossIncome - totalTax;
 
@@ -204,7 +281,9 @@ export function calculateOldRegimeTax(salary: SalaryBreakdown, deductions: Deduc
     grossIncome,
     totalDeductions,
     taxableIncome,
-    taxBeforeCess,
+    taxBeforeSurcharge,
+    surcharge,
+    taxAfterSurcharge,
     cess,
     totalTax,
     effectiveTaxRate,

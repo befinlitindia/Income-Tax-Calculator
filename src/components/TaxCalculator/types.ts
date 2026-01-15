@@ -101,7 +101,9 @@ export interface TaxResult {
   grossIncome: number;
   totalDeductions: number;
   taxableIncome: number;
-  taxBeforeCess: number;
+  taxBeforeSurcharge: number;
+  surcharge: number;
+  taxAfterSurcharge: number;
   cess: number;
   totalTax: number;
   effectiveTaxRate: number;

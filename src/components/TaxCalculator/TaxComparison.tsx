@@ -123,9 +123,15 @@ export const TaxComparison: React.FC<TaxComparisonProps> = ({ oldRegime, newRegi
               <span className="font-medium">{formatCurrency(oldRegime.taxableIncome)}</span>
             </div>
             <div className="flex justify-between items-center py-2 border-b border-border">
-              <span className="text-muted-foreground">Tax (Before Cess)</span>
-              <span className="font-medium">{formatCurrency(oldRegime.taxBeforeCess)}</span>
+              <span className="text-muted-foreground">Tax on Income</span>
+              <span className="font-medium">{formatCurrency(oldRegime.taxBeforeSurcharge)}</span>
             </div>
+            {oldRegime.surcharge > 0 && (
+              <div className="flex justify-between items-center py-2 border-b border-border">
+                <span className="text-muted-foreground">Surcharge</span>
+                <span className="font-medium">{formatCurrency(oldRegime.surcharge)}</span>
+              </div>
+            )}
             <div className="flex justify-between items-center py-2 border-b border-border">
               <span className="text-muted-foreground">Health & Education Cess (4%)</span>
               <span className="font-medium">{formatCurrency(oldRegime.cess)}</span>
@@ -187,9 +193,15 @@ export const TaxComparison: React.FC<TaxComparisonProps> = ({ oldRegime, newRegi
               <span className="font-medium">{formatCurrency(newRegime.taxableIncome)}</span>
             </div>
             <div className="flex justify-between items-center py-2 border-b border-border">
-              <span className="text-muted-foreground">Tax (Before Cess)</span>
-              <span className="font-medium">{formatCurrency(newRegime.taxBeforeCess)}</span>
+              <span className="text-muted-foreground">Tax on Income</span>
+              <span className="font-medium">{formatCurrency(newRegime.taxBeforeSurcharge)}</span>
             </div>
+            {newRegime.surcharge > 0 && (
+              <div className="flex justify-between items-center py-2 border-b border-border">
+                <span className="text-muted-foreground">Surcharge</span>
+                <span className="font-medium">{formatCurrency(newRegime.surcharge)}</span>
+              </div>
+            )}
             <div className="flex justify-between items-center py-2 border-b border-border">
               <span className="text-muted-foreground">Health & Education Cess (4%)</span>
               <span className="font-medium">{formatCurrency(newRegime.cess)}</span>
