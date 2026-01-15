@@ -51,6 +51,10 @@ const initialExemptions: SalaryExemptions = {
   standardDeduction: 50000,
   professionalTax: 0,
   entertainmentAllowance: 0,
+  homeLoanInterest: {
+    interestPaid: 0,
+    isSelfOccupied: true,
+  },
 };
 
 const initialChapterVIA: ChapterVIADeductions = {

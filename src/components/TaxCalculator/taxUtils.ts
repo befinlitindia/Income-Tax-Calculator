@@ -116,14 +116,36 @@ export function calculateNewRegimeTax(salary: SalaryBreakdown, deductions: Deduc
   };
 }
 
-export function calculateSalaryExemptionsTotal(exemptions: SalaryExemptions): number {
+export function calculateHomeLoanDeduction(exemptions: SalaryExemptions, isNewRegime: boolean): number {
+  const { interestPaid, isSelfOccupied } = exemptions.homeLoanInterest;
+  
+  if (isNewRegime) {
+    // New Regime: Only for Let Out property (set off against rental income, not from salary)
+    // For simplicity, we're not deducting in new regime for salaried individuals
+    return 0;
+  }
+  
+  // Old Regime
+  if (isSelfOccupied) {
+    // Self Occupied: Max ₹2,00,000
+    return Math.min(interestPaid, 200000);
+  } else {
+    // Let Out: No limit (actual interest paid)
+    return interestPaid;
+  }
+}
+
+export function calculateSalaryExemptionsTotal(exemptions: SalaryExemptions, isNewRegime: boolean = false): number {
+  const homeLoanDeduction = calculateHomeLoanDeduction(exemptions, isNewRegime);
+  
   return (
     exemptions.hraExemption +
     exemptions.ltaExemption +
     exemptions.gratuityExemption +
     exemptions.leaveEncashmentExemption +
     exemptions.professionalTax +
-    exemptions.entertainmentAllowance
+    exemptions.entertainmentAllowance +
+    homeLoanDeduction
   );
 }
 
@@ -154,8 +176,8 @@ export function calculateChapterVIATotal(deductions: ChapterVIADeductions): numb
 export function calculateOldRegimeTax(salary: SalaryBreakdown, deductions: Deductions): TaxResult {
   const grossIncome = calculateGrossIncome(salary);
   
-  // Calculate salary exemptions
-  const salaryExemptionsTotal = calculateSalaryExemptionsTotal(deductions.exemptions);
+  // Calculate salary exemptions (for old regime)
+  const salaryExemptionsTotal = calculateSalaryExemptionsTotal(deductions.exemptions, false);
   
   // Calculate Chapter VI-A deductions
   const chapterVIATotal = calculateChapterVIATotal(deductions.chapterVIA);

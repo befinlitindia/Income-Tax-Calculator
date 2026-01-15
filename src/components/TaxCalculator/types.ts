@@ -43,6 +43,12 @@ export interface SalaryBreakdown {
   section17_3: SalarySection17_3;
 }
 
+// Home Loan Interest under Section 24(b)
+export interface HomeLoanInterest {
+  interestPaid: number;
+  isSelfOccupied: boolean; // true = Self Occupied, false = Let Out
+}
+
 // Salary Exemptions
 export interface SalaryExemptions {
   // HRA Exemption - calculated
@@ -56,6 +62,8 @@ export interface SalaryExemptions {
   standardDeduction: number;
   professionalTax: number;
   entertainmentAllowance: number;
+  // Home Loan Interest
+  homeLoanInterest: HomeLoanInterest;
 }
 
 // Chapter VI-A Deductions

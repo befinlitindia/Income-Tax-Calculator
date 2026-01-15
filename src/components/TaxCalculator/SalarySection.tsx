@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { SalaryBreakdown } from './types';
 import { InputField } from './InputField';
-import { Briefcase, ChevronDown, ChevronUp, Gift, TrendingUp, Plus } from 'lucide-react';
+import { Briefcase, ChevronDown, ChevronUp, Gift, TrendingUp } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 interface SalarySectionProps {
@@ -11,7 +11,6 @@ interface SalarySectionProps {
 
 export const SalarySection: React.FC<SalarySectionProps> = ({ salary, onChange }) => {
   const [section17_1Open, setSection17_1Open] = useState(true);
-  const [specialAllowancesOpen, setSpecialAllowancesOpen] = useState(false);
   const [section17_2Open, setSection17_2Open] = useState(false);
   const [section17_3Open, setSection17_3Open] = useState(false);
 
@@ -50,7 +49,7 @@ export const SalarySection: React.FC<SalarySectionProps> = ({ salary, onChange }
             </div>
             {section17_1Open ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </CollapsibleTrigger>
-          <CollapsibleContent className="pt-4">
+          <CollapsibleContent className="pt-4 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <InputField
                 label="Basic Salary (Annual)"
@@ -83,56 +82,48 @@ export const SalarySection: React.FC<SalarySectionProps> = ({ salary, onChange }
                 tooltip="Any other taxable allowances under 17(1)"
               />
             </div>
-          </CollapsibleContent>
-        </Collapsible>
-
-        {/* Special Allowances */}
-        <Collapsible open={specialAllowancesOpen} onOpenChange={setSpecialAllowancesOpen}>
-          <CollapsibleTrigger className="flex items-center justify-between w-full p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors">
-            <div className="flex items-center gap-2">
-              <Plus className="w-4 h-4 text-accent" />
-              <span className="font-medium text-sm">Special Allowances</span>
-            </div>
-            {specialAllowancesOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-          </CollapsibleTrigger>
-          <CollapsibleContent className="pt-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <InputField
-                label="House Rent Allowance (HRA)"
-                value={salary.specialAllowances.hra}
-                onChange={(v) => updateSpecialAllowances('hra', v)}
-                tooltip="Annual HRA received from employer"
-              />
-              <InputField
-                label="Leave Travel Allowance (LTA)"
-                value={salary.specialAllowances.lta}
-                onChange={(v) => updateSpecialAllowances('lta', v)}
-                tooltip="Annual LTA received"
-              />
-              <InputField
-                label="Leave Encashment"
-                value={salary.specialAllowances.leaveEncashment}
-                onChange={(v) => updateSpecialAllowances('leaveEncashment', v)}
-                tooltip="Leave encashment received during service"
-              />
-              <InputField
-                label="Meal Allowance / Food Coupons"
-                value={salary.specialAllowances.mealAllowance}
-                onChange={(v) => updateSpecialAllowances('mealAllowance', v)}
-                tooltip="Annual meal allowance or food coupon value"
-              />
-              <InputField
-                label="Uniform Allowance"
-                value={salary.specialAllowances.uniformAllowance}
-                onChange={(v) => updateSpecialAllowances('uniformAllowance', v)}
-                tooltip="Uniform allowance received"
-              />
-              <InputField
-                label="Other Special Allowances"
-                value={salary.specialAllowances.otherSpecialAllowances}
-                onChange={(v) => updateSpecialAllowances('otherSpecialAllowances', v)}
-                tooltip="Any other special allowances"
-              />
+            
+            {/* Special Allowances - Nested inside Section 17(1) */}
+            <div className="border-t border-border pt-4">
+              <p className="text-sm font-medium text-muted-foreground mb-3">Special Allowances</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <InputField
+                  label="House Rent Allowance (HRA)"
+                  value={salary.specialAllowances.hra}
+                  onChange={(v) => updateSpecialAllowances('hra', v)}
+                  tooltip="Annual HRA received from employer"
+                />
+                <InputField
+                  label="Leave Travel Allowance (LTA)"
+                  value={salary.specialAllowances.lta}
+                  onChange={(v) => updateSpecialAllowances('lta', v)}
+                  tooltip="Annual LTA received"
+                />
+                <InputField
+                  label="Leave Encashment"
+                  value={salary.specialAllowances.leaveEncashment}
+                  onChange={(v) => updateSpecialAllowances('leaveEncashment', v)}
+                  tooltip="Leave encashment received during service"
+                />
+                <InputField
+                  label="Meal Allowance / Food Coupons"
+                  value={salary.specialAllowances.mealAllowance}
+                  onChange={(v) => updateSpecialAllowances('mealAllowance', v)}
+                  tooltip="Annual meal allowance or food coupon value"
+                />
+                <InputField
+                  label="Uniform Allowance"
+                  value={salary.specialAllowances.uniformAllowance}
+                  onChange={(v) => updateSpecialAllowances('uniformAllowance', v)}
+                  tooltip="Uniform allowance received"
+                />
+                <InputField
+                  label="Other Special Allowances"
+                  value={salary.specialAllowances.otherSpecialAllowances}
+                  onChange={(v) => updateSpecialAllowances('otherSpecialAllowances', v)}
+                  tooltip="Any other special allowances"
+                />
+              </div>
             </div>
           </CollapsibleContent>
         </Collapsible>
