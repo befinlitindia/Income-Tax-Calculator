@@ -1,9 +1,10 @@
 import React, { useState, useMemo } from 'react';
-import { SalaryBreakdown, Deductions, SalaryExemptions, ChapterVIADeductions } from './types';
+import { SalaryBreakdown, Deductions, SalaryExemptions, ChapterVIADeductions, HomeLoanInterest } from './types';
 import { calculateNewRegimeTax, calculateOldRegimeTax, formatCurrency } from './taxUtils';
 import { SalarySection } from './SalarySection';
 import { ExemptionsSection } from './ExemptionsSection';
 import { ChapterVIASection } from './ChapterVIASection';
+import { HomeLoanSection } from './HomeLoanSection';
 import { TaxComparison } from './TaxComparison';
 import { Suggestions } from './Suggestions';
 import { Compliances } from './Compliances';
@@ -14,17 +15,16 @@ const initialSalary: SalaryBreakdown = {
   section17_1: {
     basicSalary: 0,
     dearnessAllowance: 0,
-    conveyanceAllowance: 0,
-    medicalAllowance: 0,
-    otherAllowances: 0,
   },
   specialAllowances: {
-    leaveEncashment: 0,
-    lta: 0,
     hra: 0,
+    lta: 0,
+    leaveEncashment: 0,
+    conveyanceAllowance: 0,
+    medicalAllowance: 0,
     mealAllowance: 0,
     uniformAllowance: 0,
-    otherSpecialAllowances: 0,
+    otherAllowances: 0,
   },
   section17_2: {
     rentFreeAccommodation: 0,
@@ -52,10 +52,11 @@ const initialExemptions: SalaryExemptions = {
   standardDeduction: 50000,
   professionalTax: 0,
   entertainmentAllowance: 0,
-  homeLoanInterest: {
-    interestPaid: 0,
-    isSelfOccupied: true,
-  },
+};
+
+const initialHomeLoanInterest: HomeLoanInterest = {
+  interestPaid: 0,
+  isSelfOccupied: true,
 };
 
 const initialChapterVIA: ChapterVIADeductions = {
@@ -75,6 +76,7 @@ const initialChapterVIA: ChapterVIADeductions = {
 const initialDeductions: Deductions = {
   exemptions: initialExemptions,
   chapterVIA: initialChapterVIA,
+  homeLoanInterest: initialHomeLoanInterest,
 };
 
 export const TaxCalculator: React.FC = () => {
@@ -95,6 +97,10 @@ export const TaxCalculator: React.FC = () => {
 
   const updateChapterVIA = (chapterVIA: ChapterVIADeductions) => {
     setDeductions(prev => ({ ...prev, chapterVIA }));
+  };
+
+  const updateHomeLoanInterest = (homeLoanInterest: HomeLoanInterest) => {
+    setDeductions(prev => ({ ...prev, homeLoanInterest }));
   };
 
   // Calculate total salary from all sections
@@ -194,9 +200,16 @@ export const TaxCalculator: React.FC = () => {
             />
             <ChapterVIASection 
               deductions={deductions.chapterVIA} 
+              salary={salary}
               onChange={updateChapterVIA} 
             />
           </div>
+
+          {/* Home Loan Section - Separate */}
+          <HomeLoanSection 
+            homeLoanInterest={deductions.homeLoanInterest}
+            onChange={updateHomeLoanInterest}
+          />
 
           {/* Reset Button */}
           <div className="flex justify-center">
@@ -214,7 +227,7 @@ export const TaxCalculator: React.FC = () => {
           {totalSalary > 0 && (
             <>
               <TaxComparison oldRegime={oldRegimeResult} newRegime={newRegimeResult} />
-              <Suggestions oldRegime={oldRegimeResult} newRegime={newRegimeResult} deductions={deductions} />
+              <Suggestions oldRegime={oldRegimeResult} newRegime={newRegimeResult} deductions={deductions} salary={salary} />
               <Compliances />
             </>
           )}

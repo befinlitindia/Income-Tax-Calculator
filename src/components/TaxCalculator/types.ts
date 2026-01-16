@@ -1,20 +1,19 @@
-// Salary under Section 17(1) - Basic Salary and Allowances
+// Salary under Section 17(1) - Basic Salary and Allowances (only Basic and DA)
 export interface SalarySection17_1 {
   basicSalary: number;
   dearnessAllowance: number;
-  conveyanceAllowance: number;
-  medicalAllowance: number;
-  otherAllowances: number;
 }
 
-// Special Allowances
+// Special Allowances (includes HRA, LTA, and other allowances)
 export interface SpecialAllowances {
-  leaveEncashment: number;
-  lta: number;
   hra: number;
+  lta: number;
+  leaveEncashment: number;
+  conveyanceAllowance: number;
+  medicalAllowance: number;
   mealAllowance: number;
   uniformAllowance: number;
-  otherSpecialAllowances: number;
+  otherAllowances: number;
 }
 
 // Perquisites under Section 17(2)
@@ -62,8 +61,6 @@ export interface SalaryExemptions {
   standardDeduction: number;
   professionalTax: number;
   entertainmentAllowance: number;
-  // Home Loan Interest
-  homeLoanInterest: HomeLoanInterest;
 }
 
 // Chapter VI-A Deductions
@@ -95,6 +92,7 @@ export interface ChapterVIADeductions {
 export interface Deductions {
   exemptions: SalaryExemptions;
   chapterVIA: ChapterVIADeductions;
+  homeLoanInterest: HomeLoanInterest;
 }
 
 export interface TaxResult {
