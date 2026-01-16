@@ -93,22 +93,21 @@ function calculateSurcharge(
 }
 
 export function calculateGrossIncome(salary: SalaryBreakdown): number {
-  // Section 17(1)
+  // Section 17(1) - Basic + DA
   const section17_1_total = 
     salary.section17_1.basicSalary +
-    salary.section17_1.dearnessAllowance +
-    salary.section17_1.conveyanceAllowance +
-    salary.section17_1.medicalAllowance +
-    salary.section17_1.otherAllowances;
+    salary.section17_1.dearnessAllowance;
 
   // Special Allowances
   const specialAllowances_total =
     salary.specialAllowances.hra +
     salary.specialAllowances.lta +
     salary.specialAllowances.leaveEncashment +
+    salary.specialAllowances.conveyanceAllowance +
+    salary.specialAllowances.medicalAllowance +
     salary.specialAllowances.mealAllowance +
     salary.specialAllowances.uniformAllowance +
-    salary.specialAllowances.otherSpecialAllowances;
+    salary.specialAllowances.otherAllowances;
 
   // Section 17(2)
   const section17_2_total =
@@ -189,8 +188,8 @@ export function calculateNewRegimeTax(salary: SalaryBreakdown, deductions: Deduc
   };
 }
 
-export function calculateHomeLoanDeduction(exemptions: SalaryExemptions, isNewRegime: boolean): number {
-  const { interestPaid, isSelfOccupied } = exemptions.homeLoanInterest;
+export function calculateHomeLoanDeduction(deductions: Deductions, isNewRegime: boolean): number {
+  const { interestPaid, isSelfOccupied } = deductions.homeLoanInterest;
   
   if (isNewRegime) {
     // New Regime: Only for Let Out property (set off against rental income, not from salary)
@@ -208,8 +207,8 @@ export function calculateHomeLoanDeduction(exemptions: SalaryExemptions, isNewRe
   }
 }
 
-export function calculateSalaryExemptionsTotal(exemptions: SalaryExemptions, isNewRegime: boolean = false): number {
-  const homeLoanDeduction = calculateHomeLoanDeduction(exemptions, isNewRegime);
+export function calculateSalaryExemptionsTotal(exemptions: SalaryExemptions, deductions: Deductions, isNewRegime: boolean = false): number {
+  const homeLoanDeduction = calculateHomeLoanDeduction(deductions, isNewRegime);
   
   return (
     exemptions.hraExemption +
@@ -250,7 +249,7 @@ export function calculateOldRegimeTax(salary: SalaryBreakdown, deductions: Deduc
   const grossIncome = calculateGrossIncome(salary);
   
   // Calculate salary exemptions (for old regime)
-  const salaryExemptionsTotal = calculateSalaryExemptionsTotal(deductions.exemptions, false);
+  const salaryExemptionsTotal = calculateSalaryExemptionsTotal(deductions.exemptions, deductions, false);
   
   // Calculate Chapter VI-A deductions
   const chapterVIATotal = calculateChapterVIATotal(deductions.chapterVIA);
