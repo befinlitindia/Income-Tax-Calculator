@@ -63,14 +63,31 @@ export interface SalaryExemptions {
   entertainmentAllowance: number;
 }
 
+// User Profile for age-based calculations
+export interface UserProfile {
+  age: number;
+  isParentSeniorCitizen: boolean;
+}
+
+// 80G Donation Types
+export interface Section80GDonation {
+  type: '100_unlimited' | '50_unlimited' | '100_limited' | '50_limited';
+  institutionName?: string;
+  amount: number;
+}
+
+// 80GG Calculation Details
+export interface Section80GGDetails {
+  monthlyRent: number;
+  totalIncome: number; // For calculation reference
+}
+
 // Chapter VI-A Deductions
 export interface ChapterVIADeductions {
   // 80C - Investments
   section80C: number;
   // 80CCD(1) - NPS Employee contribution
   section80CCD1: number;
-  // 80CCD(1B) - Additional NPS
-  section80CCD1B: number;
   // 80CCD(2) - Employer NPS contribution (available in both regimes)
   section80CCD2: number;
   // 80D - Medical Insurance
@@ -78,12 +95,11 @@ export interface ChapterVIADeductions {
   section80D_parents: number;
   // 80E - Education Loan Interest
   section80E: number;
-  // 80G - Donations
-  section80G: number;
+  // 80G - Charitable Donations (detailed)
+  section80G_donations: Section80GDonation[];
   // 80GG - Rent paid (if no HRA)
   section80GG: number;
-  // 80TTA/80TTB - Savings Interest
-  section80TTA: number;
+  section80GG_monthlyRent: number;
   // 80U - Disability
   section80U: number;
 }
@@ -106,6 +122,7 @@ export interface TaxResult {
   totalTax: number;
   effectiveTaxRate: number;
   netIncome: number;
+  marginalRelief?: number;
   // Breakdown for old regime
   deductionBreakdown?: {
     salaryExemptions: number;

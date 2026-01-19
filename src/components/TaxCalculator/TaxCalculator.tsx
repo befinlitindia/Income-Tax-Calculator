@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { SalaryBreakdown, Deductions, SalaryExemptions, ChapterVIADeductions, HomeLoanInterest } from './types';
-import { calculateNewRegimeTax, calculateOldRegimeTax, formatCurrency } from './taxUtils';
+import { SalaryBreakdown, Deductions, SalaryExemptions, ChapterVIADeductions, HomeLoanInterest, UserProfile } from './types';
+import { calculateNewRegimeTax, calculateOldRegimeTax, formatCurrency, calculateGrossIncome } from './taxUtils';
 import { SalarySection } from './SalarySection';
 import { ExemptionsSection } from './ExemptionsSection';
 import { ChapterVIASection } from './ChapterVIASection';
@@ -8,8 +8,16 @@ import { HomeLoanSection } from './HomeLoanSection';
 import { TaxComparison } from './TaxComparison';
 import { Suggestions } from './Suggestions';
 import { Compliances } from './Compliances';
-import { Calculator, IndianRupee, Scale, RefreshCw } from 'lucide-react';
+import { Calculator, IndianRupee, Scale, RefreshCw, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { InputField } from './InputField';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+
+const initialUserProfile: UserProfile = {
+  age: 30,
+  isParentSeniorCitizen: false,
+};
 
 const initialSalary: SalaryBreakdown = {
   section17_1: {
@@ -62,14 +70,13 @@ const initialHomeLoanInterest: HomeLoanInterest = {
 const initialChapterVIA: ChapterVIADeductions = {
   section80C: 0,
   section80CCD1: 0,
-  section80CCD1B: 0,
   section80CCD2: 0,
   section80D_self: 0,
   section80D_parents: 0,
   section80E: 0,
-  section80G: 0,
+  section80G_donations: [],
   section80GG: 0,
-  section80TTA: 0,
+  section80GG_monthlyRent: 0,
   section80U: 0,
 };
 
@@ -80,13 +87,16 @@ const initialDeductions: Deductions = {
 };
 
 export const TaxCalculator: React.FC = () => {
+  const [userProfile, setUserProfile] = useState<UserProfile>(initialUserProfile);
   const [salary, setSalary] = useState<SalaryBreakdown>(initialSalary);
   const [deductions, setDeductions] = useState<Deductions>(initialDeductions);
 
+  const grossIncome = useMemo(() => calculateGrossIncome(salary), [salary]);
   const newRegimeResult = useMemo(() => calculateNewRegimeTax(salary, deductions), [salary, deductions]);
-  const oldRegimeResult = useMemo(() => calculateOldRegimeTax(salary, deductions), [salary, deductions]);
+  const oldRegimeResult = useMemo(() => calculateOldRegimeTax(salary, deductions, userProfile), [salary, deductions, userProfile]);
 
   const handleReset = () => {
+    setUserProfile(initialUserProfile);
     setSalary(initialSalary);
     setDeductions(initialDeductions);
   };
@@ -144,8 +154,8 @@ export const TaxCalculator: React.FC = () => {
               <strong className="text-foreground"> Old Tax Regime</strong> (with deductions and exemptions) and the 
               <strong className="text-foreground"> New Tax Regime</strong> (simplified slabs without most deductions) 
               for AY 2026-27. The New Regime under Finance Act 2025 offers revised tax slabs with a basic exemption 
-              limit of ₹4 lakh and rebate under Section 87A for income up to ₹12 lakh, making it attractive for 
-              taxpayers with fewer deductions. Enter your salary components and deductions below to find which 
+              limit of ₹4 lakh and rebate under Section 87A for income up to ₹12 lakh (with marginal relief for income slightly above ₹12 lakh), 
+              making it attractive for taxpayers with fewer deductions. Enter your salary components and deductions below to find which 
               regime saves you more tax.
             </p>
           </div>
@@ -155,6 +165,60 @@ export const TaxCalculator: React.FC = () => {
       {/* Main Content */}
       <main className="py-8 px-4">
         <div className="container max-w-6xl mx-auto space-y-8">
+          {/* User Profile - Age Section */}
+          <div className="card-elevated p-6 animate-slide-up">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 rounded-lg bg-blue-500/10">
+                <User className="w-5 h-5 text-blue-600" />
+              </div>
+              <div>
+                <h2 className="section-title mb-0">Taxpayer Profile</h2>
+                <p className="text-xs text-muted-foreground mt-1">Age determines tax slabs and deduction limits</p>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <InputField
+                  label="Your Age (as on 31st March 2026)"
+                  value={userProfile.age}
+                  onChange={(v) => setUserProfile(prev => ({ ...prev, age: v }))}
+                  tooltip="Your age determines the applicable tax slabs under Old Regime and 80D limits"
+                />
+                <div className="mt-2">
+                  {userProfile.age >= 80 && (
+                    <span className="text-xs px-2 py-1 rounded-full bg-purple-100 text-purple-700">Super Senior Citizen (80+)</span>
+                  )}
+                  {userProfile.age >= 60 && userProfile.age < 80 && (
+                    <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700">Senior Citizen (60-80)</span>
+                  )}
+                  {userProfile.age < 60 && (
+                    <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-700">Below 60 years</span>
+                  )}
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Is your parent a Senior Citizen?</Label>
+                <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
+                  <span className={`text-sm ${!userProfile.isParentSeniorCitizen ? 'font-medium' : 'text-muted-foreground'}`}>
+                    No (Below 60)
+                  </span>
+                  <Switch
+                    checked={userProfile.isParentSeniorCitizen}
+                    onCheckedChange={(checked) => setUserProfile(prev => ({ ...prev, isParentSeniorCitizen: checked }))}
+                  />
+                  <span className={`text-sm ${userProfile.isParentSeniorCitizen ? 'font-medium' : 'text-muted-foreground'}`}>
+                    Yes (60+ years)
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Affects 80D deduction limit for parents: ₹{userProfile.isParentSeniorCitizen ? '50,000' : '25,000'}
+                </p>
+              </div>
+            </div>
+          </div>
+
           {/* Quick Summary */}
           {totalSalary > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-fade-in">
@@ -183,6 +247,9 @@ export const TaxCalculator: React.FC = () => {
                 <div>
                   <p className="text-sm text-muted-foreground">Tax (New Regime)</p>
                   <p className="font-display font-bold text-xl text-emerald-600">{formatCurrency(newRegimeResult.totalTax)}</p>
+                  {newRegimeResult.marginalRelief && newRegimeResult.marginalRelief > 0 && (
+                    <p className="text-xs text-emerald-600">(Incl. marginal relief: {formatCurrency(newRegimeResult.marginalRelief)})</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -201,6 +268,8 @@ export const TaxCalculator: React.FC = () => {
             <ChapterVIASection 
               deductions={deductions.chapterVIA} 
               salary={salary}
+              userProfile={userProfile}
+              grossIncome={grossIncome}
               onChange={updateChapterVIA} 
             />
           </div>
@@ -227,7 +296,7 @@ export const TaxCalculator: React.FC = () => {
           {totalSalary > 0 && (
             <>
               <TaxComparison oldRegime={oldRegimeResult} newRegime={newRegimeResult} />
-              <Suggestions oldRegime={oldRegimeResult} newRegime={newRegimeResult} deductions={deductions} salary={salary} />
+              <Suggestions oldRegime={oldRegimeResult} newRegime={newRegimeResult} deductions={deductions} salary={salary} userProfile={userProfile} />
               <Compliances />
             </>
           )}

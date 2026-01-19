@@ -1,16 +1,17 @@
 import React from 'react';
-import { TaxResult, Deductions, SalaryBreakdown } from './types';
-import { formatCurrency } from './taxUtils';
-import { Lightbulb, TrendingUp, Shield, Coins, Building, Heart, Home, GraduationCap, Wallet, PiggyBank, BadgePercent, CalendarCheck } from 'lucide-react';
+import { TaxResult, Deductions, SalaryBreakdown, UserProfile } from './types';
+import { formatCurrency, calculate80CCD1B } from './taxUtils';
+import { Lightbulb, TrendingUp, Shield, Coins, Building, Heart, Home, GraduationCap, Wallet, PiggyBank, CalendarCheck } from 'lucide-react';
 
 interface SuggestionsProps {
   oldRegime: TaxResult;
   newRegime: TaxResult;
   deductions: Deductions;
   salary: SalaryBreakdown;
+  userProfile: UserProfile;
 }
 
-export const Suggestions: React.FC<SuggestionsProps> = ({ oldRegime, newRegime, deductions, salary }) => {
+export const Suggestions: React.FC<SuggestionsProps> = ({ oldRegime, newRegime, deductions, salary, userProfile }) => {
   const suggestions: Array<{ icon: React.ReactNode; title: string; description: string; impact?: string; priority: 'high' | 'medium' | 'low' }> = [];
 
   const basicPlusDA = salary.section17_1.basicSalary + salary.section17_1.dearnessAllowance;
@@ -22,9 +23,9 @@ export const Suggestions: React.FC<SuggestionsProps> = ({ oldRegime, newRegime, 
   const hasHRA = salary.specialAllowances.hra > 0;
   const hasHRAExemption = deductions.exemptions.hraExemption > 0;
   const rentPaid = deductions.exemptions.rentPaid;
-  const section80GG = deductions.chapterVIA.section80GG;
+  const section80GG_monthlyRent = deductions.chapterVIA.section80GG_monthlyRent;
   
-  if (!hasHRA && rentPaid === 0 && section80GG === 0) {
+  if (!hasHRA && rentPaid === 0 && section80GG_monthlyRent === 0) {
     suggestions.push({
       icon: <Home className="w-5 h-5" />,
       title: "Claim Rent Deduction u/s 80GG",
@@ -47,13 +48,15 @@ export const Suggestions: React.FC<SuggestionsProps> = ({ oldRegime, newRegime, 
   // 2. Health Insurance Analysis - High Priority
   const section80D_self = deductions.chapterVIA.section80D_self;
   const section80D_parents = deductions.chapterVIA.section80D_parents;
+  const selfLimit = userProfile.age >= 60 ? 50000 : 25000;
+  const parentsLimit = userProfile.isParentSeniorCitizen ? 50000 : 25000;
   
   if (section80D_self === 0) {
     suggestions.push({
       icon: <Heart className="w-5 h-5" />,
       title: "Get Health Insurance for Yourself & Family",
-      description: "Health insurance premium is deductible u/s 80D. Self & family can claim up to ₹25,000 (₹50,000 if any member is senior citizen). This provides both tax benefits and financial protection.",
-      impact: `Potential savings: ${formatCurrency(25000 * 0.30)}`,
+      description: `Health insurance premium is deductible u/s 80D. Self & family can claim up to ₹${selfLimit.toLocaleString('en-IN')} (₹25,000 normal, ₹50,000 if senior citizen). This provides both tax benefits and financial protection.`,
+      impact: `Potential savings: ${formatCurrency(selfLimit * 0.30)}`,
       priority: 'high',
     });
   }
@@ -62,13 +65,13 @@ export const Suggestions: React.FC<SuggestionsProps> = ({ oldRegime, newRegime, 
     suggestions.push({
       icon: <Heart className="w-5 h-5" />,
       title: "Cover Your Parents Under 80D",
-      description: "You can claim additional deduction for parents' health insurance - ₹25,000 (₹50,000 if senior citizen). Even if you don't have a health insurance policy for them, you can claim up to ₹5,000 for preventive health check-up expenses.",
-      impact: `Additional deduction possible: up to ${formatCurrency(50000)}`,
+      description: `You can claim additional deduction for parents' health insurance - up to ₹${parentsLimit.toLocaleString('en-IN')} (₹25,000 normal, ₹50,000 if senior citizen). Even if you don't have a health insurance policy for them, you can claim up to ₹5,000 for preventive health check-up expenses.`,
+      impact: `Additional deduction possible: up to ${formatCurrency(parentsLimit)}`,
       priority: 'high',
     });
   }
 
-  if (section80D_self > 0 && section80D_self < 25000) {
+  if (section80D_self > 0 && section80D_self < selfLimit) {
     suggestions.push({
       icon: <Heart className="w-5 h-5" />,
       title: "Claim Preventive Health Check-up",
@@ -85,7 +88,7 @@ export const Suggestions: React.FC<SuggestionsProps> = ({ oldRegime, newRegime, 
     suggestions.push({
       icon: <Coins className="w-5 h-5" />,
       title: "Maximize Section 80C Investments",
-      description: `You can invest ₹${new Intl.NumberFormat('en-IN').format(remaining)} more in ELSS mutual funds (3-year lock-in, good returns), PPF (safe, 15-year), life insurance premium, 5-year tax saver FD, children's tuition fees, or home loan principal repayment.`,
+      description: `You can invest ₹${remaining.toLocaleString('en-IN')} more in ELSS mutual funds (3-year lock-in, good returns), PPF (safe, 15-year), life insurance premium, 5-year tax saver FD, children's tuition fees, or home loan principal repayment.`,
       impact: `Potential savings: ${formatCurrency(Math.min(remaining * 0.30, 45000))}`,
       priority: 'high',
     });
@@ -93,17 +96,17 @@ export const Suggestions: React.FC<SuggestionsProps> = ({ oldRegime, newRegime, 
 
   // 4. NPS Contribution Analysis - Medium Priority
   const section80CCD1 = deductions.chapterVIA.section80CCD1;
-  const section80CCD1B = deductions.chapterVIA.section80CCD1B;
   const section80CCD2 = deductions.chapterVIA.section80CCD2;
   const maxEmployeeNPS = Math.round(basicPlusDA * 0.10);
+  const auto80CCD1B = calculate80CCD1B(section80C, section80CCD1, maxEmployeeNPS);
   
-  if (section80CCD1B < 50000) {
-    const remaining = 50000 - section80CCD1B;
+  if (auto80CCD1B < 50000 && section80CCD1 < maxEmployeeNPS + 50000) {
+    const remainingCCD1B = 50000 - auto80CCD1B;
     suggestions.push({
       icon: <TrendingUp className="w-5 h-5" />,
-      title: "Invest in NPS for Additional ₹50K Deduction",
-      description: "Section 80CCD(1B) allows additional ₹50,000 deduction for NPS contributions, over and above the 80C limit. NPS offers market-linked returns with partial withdrawal facility after 3 years.",
-      impact: `Potential savings: ${formatCurrency(remaining * 0.30)}`,
+      title: "Invest in NPS for Additional ₹50,000 Deduction",
+      description: "Section 80CCD(1B) allows additional ₹50,000 deduction for NPS contributions, over and above the 80C limit. If your NPS contribution exceeds 80C limit, excess automatically qualifies for 80CCD(1B). NPS offers market-linked returns with partial withdrawal facility after 3 years.",
+      impact: `Potential savings: ${formatCurrency(remainingCCD1B * 0.30)}`,
       priority: 'medium',
     });
   }
@@ -112,8 +115,8 @@ export const Suggestions: React.FC<SuggestionsProps> = ({ oldRegime, newRegime, 
     suggestions.push({
       icon: <TrendingUp className="w-5 h-5" />,
       title: "Request Employer NPS Contribution",
-      description: "Ask your employer to contribute to NPS (up to 10% of Basic+DA for private, 14% for govt). Section 80CCD(2) deduction is available in BOTH Old and New regimes - a rare benefit!",
-      impact: `Potential deduction: up to ${formatCurrency(Math.round(basicPlusDA * 0.10))}`,
+      description: "Ask your employer to contribute to NPS (up to 10% of Basic+DA for private employees, 14% for govt employees). Section 80CCD(2) deduction is available in BOTH Old and New regimes - a rare benefit!",
+      impact: `Potential deduction: up to ${formatCurrency(Math.round(basicPlusDA * 0.10))} (Private) / ${formatCurrency(Math.round(basicPlusDA * 0.14))} (Govt)`,
       priority: 'high',
     });
   }
@@ -124,7 +127,7 @@ export const Suggestions: React.FC<SuggestionsProps> = ({ oldRegime, newRegime, 
     suggestions.push({
       icon: <GraduationCap className="w-5 h-5" />,
       title: "Education Loan Interest Deduction",
-      description: "If you or your spouse/children have taken an education loan for higher studies, the entire interest (no limit) is deductible u/s 80E for up to 8 years from the year of starting repayment.",
+      description: "If you or your spouse/children have taken an education loan from specified institutions for higher studies, the entire interest (no max limit) is deductible u/s 80E for up to 8 years from the year of starting repayment.",
       priority: 'low',
     });
   }
@@ -141,37 +144,7 @@ export const Suggestions: React.FC<SuggestionsProps> = ({ oldRegime, newRegime, 
     });
   }
 
-  // 7. Regime Comparison Suggestion - High Priority
-  if (taxSavingsDiff > 10000) {
-    if (betterRegime === 'old') {
-      suggestions.push({
-        icon: <BadgePercent className="w-5 h-5" />,
-        title: "Old Regime is Beneficial for You",
-        description: `Based on your deductions, the Old Tax Regime saves you ${formatCurrency(taxSavingsDiff)} compared to New Regime. Ensure you file ITR with Old Regime option selected.`,
-        impact: `Tax savings: ${formatCurrency(taxSavingsDiff)}`,
-        priority: 'high',
-      });
-    } else {
-      suggestions.push({
-        icon: <BadgePercent className="w-5 h-5" />,
-        title: "New Regime is More Beneficial",
-        description: `With your current deductions level, the New Tax Regime saves you ${formatCurrency(taxSavingsDiff)}. The New Regime is default from AY 2024-25 onwards. If you want Old Regime, you need to specifically opt for it.`,
-        impact: `Tax savings: ${formatCurrency(taxSavingsDiff)}`,
-        priority: 'high',
-      });
-
-      if (oldRegime.totalDeductions < 300000) {
-        suggestions.push({
-          icon: <PiggyBank className="w-5 h-5" />,
-          title: "Consider Increasing Deductions for Old Regime",
-          description: "If you can increase your deductions by investing more in 80C, 80D, NPS, etc., the Old Regime might become more beneficial. Generally, deductions above ₹3-3.5L make Old Regime attractive.",
-          priority: 'medium',
-        });
-      }
-    }
-  }
-
-  // 8. Advance Tax Reminder - Based on tax liability
+  // 7. Advance Tax Reminder - Based on tax liability
   if (oldRegime.totalTax > 10000 || newRegime.totalTax > 10000) {
     suggestions.push({
       icon: <CalendarCheck className="w-5 h-5" />,
@@ -181,7 +154,7 @@ export const Suggestions: React.FC<SuggestionsProps> = ({ oldRegime, newRegime, 
     });
   }
 
-  // 9. LTA Exemption
+  // 8. LTA Exemption
   if (salary.specialAllowances.lta > 0 && deductions.exemptions.ltaExemption === 0) {
     suggestions.push({
       icon: <Building className="w-5 h-5" />,
@@ -192,13 +165,13 @@ export const Suggestions: React.FC<SuggestionsProps> = ({ oldRegime, newRegime, 
     });
   }
 
-  // 10. Charitable Donations
-  const section80G = deductions.chapterVIA.section80G;
-  if (section80G === 0 && totalGross > 1000000) {
+  // 9. Charitable Donations
+  const section80G_donations = deductions.chapterVIA.section80G_donations;
+  if ((!section80G_donations || section80G_donations.length === 0) && totalGross > 1000000) {
     suggestions.push({
       icon: <Shield className="w-5 h-5" />,
       title: "Donate to Charity for Tax Benefits",
-      description: "Donations to approved charities qualify for 50% or 100% deduction u/s 80G. Donations to PM Relief Fund, CM Relief Fund, etc. get 100% deduction. Keep receipts with 80G registration number.",
+      description: "Donations to approved charities qualify for 50% or 100% deduction u/s 80G. Donations to PM Relief Fund, PM CARES Fund, etc. get 100% unlimited deduction. For other institutions, ensure you have 80G certificate. Keep receipts with 80G registration number.",
       priority: 'low',
     });
   }
