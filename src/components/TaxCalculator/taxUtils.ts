@@ -1,4 +1,4 @@
-import { SalaryBreakdown, Deductions, TaxResult, SalaryExemptions, ChapterVIADeductions } from './types';
+import { SalaryBreakdown, Deductions, TaxResult, SalaryExemptions, ChapterVIADeductions, UserProfile, Section80GDonation } from './types';
 
 // New Tax Regime Slabs for AY 2026-27 (FY 2025-26) as per Finance Act 2025
 const NEW_REGIME_SLABS = [
@@ -11,10 +11,25 @@ const NEW_REGIME_SLABS = [
   { min: 2400000, max: Infinity, rate: 30 },
 ];
 
-// Old Tax Regime Slabs
+// Old Tax Regime Slabs (for non-senior citizens)
 const OLD_REGIME_SLABS = [
   { min: 0, max: 250000, rate: 0 },
   { min: 250000, max: 500000, rate: 5 },
+  { min: 500000, max: 1000000, rate: 20 },
+  { min: 1000000, max: Infinity, rate: 30 },
+];
+
+// Old Tax Regime Slabs (for senior citizens 60-80)
+const OLD_REGIME_SLABS_SENIOR = [
+  { min: 0, max: 300000, rate: 0 },
+  { min: 300000, max: 500000, rate: 5 },
+  { min: 500000, max: 1000000, rate: 20 },
+  { min: 1000000, max: Infinity, rate: 30 },
+];
+
+// Old Tax Regime Slabs (for super senior citizens 80+)
+const OLD_REGIME_SLABS_SUPER_SENIOR = [
+  { min: 0, max: 500000, rate: 0 },
   { min: 500000, max: 1000000, rate: 20 },
   { min: 1000000, max: Infinity, rate: 30 },
 ];
@@ -45,6 +60,13 @@ const NEW_REGIME_SURCHARGE_RATES = [
   { threshold: SURCHARGE_1CR, rate: 0.15 },
   { threshold: SURCHARGE_50L, rate: 0.10 },
 ];
+
+// Get appropriate slabs based on age
+function getOldRegimeSlabs(age: number): typeof OLD_REGIME_SLABS {
+  if (age >= 80) return OLD_REGIME_SLABS_SUPER_SENIOR;
+  if (age >= 60) return OLD_REGIME_SLABS_SENIOR;
+  return OLD_REGIME_SLABS;
+}
 
 // Calculate surcharge with marginal relief
 function calculateSurcharge(
@@ -90,6 +112,28 @@ function calculateSurcharge(
   }
 
   return surcharge;
+}
+
+// Calculate marginal relief for income just above 12 lakhs in new regime
+function calculateMarginalRelief12L(
+  taxableIncome: number,
+  taxBeforeSurcharge: number
+): { tax: number; marginalRelief: number } {
+  // Marginal relief applies when taxable income is slightly above 12L
+  // Tax should not exceed the income above 12L
+  if (taxableIncome <= NEW_REGIME_REBATE_LIMIT) {
+    return { tax: 0, marginalRelief: 0 };
+  }
+  
+  const excessAbove12L = taxableIncome - NEW_REGIME_REBATE_LIMIT;
+  
+  // If tax exceeds the excess income above 12L, apply marginal relief
+  if (taxBeforeSurcharge > excessAbove12L) {
+    const marginalRelief = taxBeforeSurcharge - excessAbove12L;
+    return { tax: excessAbove12L, marginalRelief };
+  }
+  
+  return { tax: taxBeforeSurcharge, marginalRelief: 0 };
 }
 
 export function calculateGrossIncome(salary: SalaryBreakdown): number {
@@ -153,12 +197,20 @@ export function calculateNewRegimeTax(salary: SalaryBreakdown, deductions: Deduc
   
   const taxableIncome = Math.max(0, grossIncome - totalDeductions);
   
-  let taxBeforeSurcharge = calculateTaxFromSlabs(taxableIncome, NEW_REGIME_SLABS);
+  let calculatedTax = calculateTaxFromSlabs(taxableIncome, NEW_REGIME_SLABS);
+  let marginalRelief = 0;
   
   // Apply rebate u/s 87A for income up to 12 lakh
   if (taxableIncome <= NEW_REGIME_REBATE_LIMIT) {
-    taxBeforeSurcharge = 0;
+    calculatedTax = 0;
+  } else {
+    // Apply marginal relief for income slightly above 12L
+    const marginalResult = calculateMarginalRelief12L(taxableIncome, calculatedTax);
+    calculatedTax = marginalResult.tax;
+    marginalRelief = marginalResult.marginalRelief;
   }
+
+  const taxBeforeSurcharge = calculatedTax;
 
   // Calculate surcharge (New Regime - max 25%)
   const surcharge = calculateSurcharge(taxableIncome, taxBeforeSurcharge, NEW_REGIME_SLABS, NEW_REGIME_SURCHARGE_RATES);
@@ -180,6 +232,7 @@ export function calculateNewRegimeTax(salary: SalaryBreakdown, deductions: Deduc
     totalTax,
     effectiveTaxRate,
     netIncome,
+    marginalRelief,
     deductionBreakdown: {
       salaryExemptions: 0,
       chapterVIA: employerNPS,
@@ -221,38 +274,95 @@ export function calculateSalaryExemptionsTotal(exemptions: SalaryExemptions, ded
   );
 }
 
-export function calculateChapterVIATotal(deductions: ChapterVIADeductions): number {
-  const section80C = Math.min(deductions.section80C + deductions.section80CCD1, 150000);
-  const section80CCD1B = Math.min(deductions.section80CCD1B, 50000);
+// Calculate 80CCD(1B) automatically from excess NPS contribution
+export function calculate80CCD1B(section80C: number, section80CCD1: number, maxCCD1: number): number {
+  const usedIn80C = Math.min(section80C, 150000);
+  const remainingFor80CCD1 = Math.max(0, 150000 - usedIn80C);
+  const ccd1InLimit = Math.min(section80CCD1, remainingFor80CCD1, maxCCD1);
+  const excessCCD1 = Math.max(0, section80CCD1 - ccd1InLimit);
+  // Excess goes to 80CCD(1B), max 50000
+  return Math.min(excessCCD1, 50000);
+}
+
+// Calculate 80G deduction from donations
+export function calculate80GDeduction(donations: Section80GDonation[], grossTotalIncome: number): number {
+  if (!donations || donations.length === 0) return 0;
+  
+  let totalDeduction = 0;
+  const limitedDonationBase = grossTotalIncome * 0.10; // 10% of gross total income for limited donations
+  
+  for (const donation of donations) {
+    switch (donation.type) {
+      case '100_unlimited':
+        totalDeduction += donation.amount;
+        break;
+      case '50_unlimited':
+        totalDeduction += donation.amount * 0.5;
+        break;
+      case '100_limited':
+        totalDeduction += Math.min(donation.amount, limitedDonationBase);
+        break;
+      case '50_limited':
+        totalDeduction += Math.min(donation.amount * 0.5, limitedDonationBase * 0.5);
+        break;
+    }
+  }
+  
+  return Math.round(totalDeduction);
+}
+
+// Calculate 80GG deduction
+export function calculate80GGDeduction(monthlyRent: number, totalIncome: number): number {
+  if (monthlyRent === 0) return 0;
+  
+  const annualRent = monthlyRent * 12;
+  const tenPercentOfIncome = totalIncome * 0.10;
+  
+  // 80GG deduction is minimum of:
+  // 1. ₹5,000 per month (₹60,000 per year)
+  // 2. 25% of total income
+  // 3. Rent paid - 10% of total income
+  
+  const option1 = 60000; // Max ₹5,000/month
+  const option2 = totalIncome * 0.25;
+  const option3 = Math.max(0, annualRent - tenPercentOfIncome);
+  
+  return Math.round(Math.min(option1, option2, option3));
+}
+
+export function calculateChapterVIATotal(deductions: ChapterVIADeductions, grossIncome: number = 0, basicPlusDA: number = 0): number {
+  const maxCCD1 = Math.round(basicPlusDA * 0.10);
+  const section80CWithCCD1 = Math.min(deductions.section80C + Math.min(deductions.section80CCD1, maxCCD1), 150000);
+  const section80CCD1B = calculate80CCD1B(deductions.section80C, deductions.section80CCD1, maxCCD1);
   const section80CCD2 = deductions.section80CCD2; // No limit, based on salary
   const section80D = Math.min(deductions.section80D_self, 50000) + Math.min(deductions.section80D_parents, 50000);
   const section80E = deductions.section80E; // No limit
-  const section80G = deductions.section80G;
-  const section80GG = Math.min(deductions.section80GG, 60000);
-  const section80TTA = Math.min(deductions.section80TTA, 10000); // 80TTB for seniors is 50K
+  const section80G = calculate80GDeduction(deductions.section80G_donations, grossIncome);
+  const section80GG = calculate80GGDeduction(deductions.section80GG_monthlyRent, grossIncome);
   const section80U = Math.min(deductions.section80U, 125000);
 
   return (
-    section80C +
+    section80CWithCCD1 +
     section80CCD1B +
     section80CCD2 +
     section80D +
     section80E +
     section80G +
     section80GG +
-    section80TTA +
     section80U
   );
 }
 
-export function calculateOldRegimeTax(salary: SalaryBreakdown, deductions: Deductions): TaxResult {
+export function calculateOldRegimeTax(salary: SalaryBreakdown, deductions: Deductions, userProfile?: UserProfile): TaxResult {
   const grossIncome = calculateGrossIncome(salary);
+  const basicPlusDA = salary.section17_1.basicSalary + salary.section17_1.dearnessAllowance;
+  const age = userProfile?.age || 30;
   
   // Calculate salary exemptions (for old regime)
   const salaryExemptionsTotal = calculateSalaryExemptionsTotal(deductions.exemptions, deductions, false);
   
   // Calculate Chapter VI-A deductions
-  const chapterVIATotal = calculateChapterVIATotal(deductions.chapterVIA);
+  const chapterVIATotal = calculateChapterVIATotal(deductions.chapterVIA, grossIncome, basicPlusDA);
   
   // Standard deduction
   const standardDeduction = OLD_REGIME_STANDARD_DEDUCTION;
@@ -260,7 +370,10 @@ export function calculateOldRegimeTax(salary: SalaryBreakdown, deductions: Deduc
   const totalDeductions = salaryExemptionsTotal + chapterVIATotal + standardDeduction;
   const taxableIncome = Math.max(0, grossIncome - totalDeductions);
   
-  let taxBeforeSurcharge = calculateTaxFromSlabs(taxableIncome, OLD_REGIME_SLABS);
+  // Get appropriate slabs based on age
+  const slabs = getOldRegimeSlabs(age);
+  
+  let taxBeforeSurcharge = calculateTaxFromSlabs(taxableIncome, slabs);
   
   // Apply rebate u/s 87A for income up to 5 lakh
   if (taxableIncome <= OLD_REGIME_REBATE_LIMIT) {
@@ -268,7 +381,7 @@ export function calculateOldRegimeTax(salary: SalaryBreakdown, deductions: Deduc
   }
 
   // Calculate surcharge (Old Regime - up to 37%)
-  const surcharge = calculateSurcharge(taxableIncome, taxBeforeSurcharge, OLD_REGIME_SLABS, OLD_REGIME_SURCHARGE_RATES);
+  const surcharge = calculateSurcharge(taxableIncome, taxBeforeSurcharge, slabs, OLD_REGIME_SURCHARGE_RATES);
   const taxAfterSurcharge = taxBeforeSurcharge + surcharge;
   
   const cess = taxAfterSurcharge * CESS_RATE;

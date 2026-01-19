@@ -1,18 +1,18 @@
 import React from 'react';
-import { ClipboardCheck, AlertTriangle, FileText, Calendar, Building2, Receipt } from 'lucide-react';
+import { ClipboardCheck, AlertTriangle, FileText, Calendar, Building2, Receipt, Globe } from 'lucide-react';
 
 export const Compliances: React.FC = () => {
   const compliances = [
     {
       icon: <Building2 className="w-5 h-5" />,
       title: "TDS on Rent u/s 194-IB",
-      description: "If you pay rent exceeding ₹50,000 per month, you must deduct TDS at 5% (2% for FY 2025-26 onwards for certain cases) and deposit it with the government using Form 26QC.",
+      description: "If you pay rent exceeding ₹50,000 per month, you must deduct TDS at 2% and deposit it with the government using Form 26QC. If your landlord is an NRI, TDS must be deducted under Section 195 at 31.2% without any threshold limit.",
       severity: "warning" as const,
     },
     {
       icon: <Receipt className="w-5 h-5" />,
-      title: "Maintain Investment Proofs",
-      description: "Keep all investment proofs (80C, 80D, etc.) and rent receipts for at least 6 years from the end of the relevant assessment year for verification purposes.",
+      title: "Maintain Document Proofs",
+      description: "Collect Form 16 & salary slips from employer, maintain investment proofs for 80C/80D/NPS deductions, keep rent agreement & rent receipts for HRA/80GG exemption, and preserve all documents for at least 6 years from the end of the relevant assessment year.",
       severity: "info" as const,
     },
     {
