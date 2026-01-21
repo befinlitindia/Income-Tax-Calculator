@@ -63,30 +63,30 @@ export const ExemptionsSection: React.FC<ExemptionsSectionProps> = ({ exemptions
   };
 
   return (
-    <div className="card-elevated p-6 animate-slide-up" style={{ animationDelay: '0.1s' }}>
-      <div className="flex items-center gap-3 mb-6">
+    <div className="card-elevated p-4 sm:p-6 animate-slide-up" style={{ animationDelay: '0.1s' }}>
+      <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
         <div className="p-2 rounded-lg bg-emerald-500/10">
-          <Shield className="w-5 h-5 text-emerald-600" />
+          <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600" />
         </div>
         <div>
-          <h2 className="section-title mb-0">Salary Exemptions</h2>
-          <p className="text-xs text-muted-foreground mt-1">Applicable for Old Regime</p>
+          <h2 className="section-title mb-0 text-base sm:text-lg">Salary Exemptions</h2>
+          <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">Applicable for Old Regime</p>
         </div>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-3 sm:space-y-4">
         {/* HRA Exemption Calculator */}
         <Collapsible open={hraOpen} onOpenChange={setHraOpen}>
-          <CollapsibleTrigger className="flex items-center justify-between w-full p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors">
+          <CollapsibleTrigger className="flex items-center justify-between w-full p-2 sm:p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors">
             <div className="flex items-center gap-2">
-              <Home className="w-4 h-4 text-emerald-600" />
-              <span className="font-medium text-sm">HRA Exemption Calculator</span>
+              <Home className="w-3 h-3 sm:w-4 sm:h-4 text-emerald-600" />
+              <span className="font-medium text-xs sm:text-sm">HRA Exemption Calculator</span>
             </div>
             {hraOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </CollapsibleTrigger>
-          <CollapsibleContent className="pt-4">
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <CollapsibleContent className="pt-3 sm:pt-4">
+            <div className="space-y-3 sm:space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <InputField
                   label="Total Rent Paid (Annual)"
                   value={exemptions.rentPaid}
@@ -94,30 +94,31 @@ export const ExemptionsSection: React.FC<ExemptionsSectionProps> = ({ exemptions
                   tooltip="Total rent paid during the financial year"
                 />
                 <div className="space-y-1.5">
-                  <Label className="text-sm font-medium">City Type</Label>
-                  <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
-                    <span className={`text-sm ${!exemptions.isMetroCity ? 'font-medium' : 'text-muted-foreground'}`}>
+                  <Label className="text-xs sm:text-sm font-medium">City Type</Label>
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-muted/30 rounded-lg">
+                    <span className={`text-xs sm:text-sm ${!exemptions.isMetroCity ? 'font-medium' : 'text-muted-foreground'}`}>
                       Non-Metro
                     </span>
                     <Switch
                       checked={exemptions.isMetroCity}
                       onCheckedChange={(checked) => updateField('isMetroCity', checked)}
                     />
-                    <span className={`text-sm ${exemptions.isMetroCity ? 'font-medium' : 'text-muted-foreground'}`}>
-                      Metro (Delhi, Mumbai, Chennai, Kolkata)
+                    <span className={`text-xs sm:text-sm ${exemptions.isMetroCity ? 'font-medium' : 'text-muted-foreground'}`}>
+                      Metro
                     </span>
                   </div>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">Delhi, Mumbai, Chennai, Kolkata</p>
                 </div>
               </div>
               
               {/* HRA Calculation Summary */}
-              <div className="p-4 bg-emerald-50 rounded-lg border border-emerald-200">
+              <div className="p-3 sm:p-4 bg-emerald-50 rounded-lg border border-emerald-200">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-emerald-700">Calculated HRA Exemption</span>
-                  <span className="font-bold text-emerald-700">{formatCurrency(exemptions.hraExemption)}</span>
+                  <span className="text-xs sm:text-sm text-emerald-700">Calculated HRA Exemption</span>
+                  <span className="font-bold text-emerald-700 text-sm sm:text-base">{formatCurrency(exemptions.hraExemption)}</span>
                 </div>
                 {salary.specialAllowances.hra > 0 && exemptions.rentPaid > 0 && (
-                  <p className="text-xs text-emerald-600 mt-2">
+                  <p className="text-[10px] sm:text-xs text-emerald-600 mt-2">
                     Minimum of: HRA Received ({formatCurrency(salary.specialAllowances.hra)}), 
                     Rent - 10% of Basic ({formatCurrency(exemptions.rentPaid - (0.10 * (salary.section17_1.basicSalary + salary.section17_1.dearnessAllowance)))}), 
                     {exemptions.isMetroCity ? '50%' : '40%'} of Basic ({formatCurrency((exemptions.isMetroCity ? 0.50 : 0.40) * (salary.section17_1.basicSalary + salary.section17_1.dearnessAllowance))})
@@ -130,15 +131,15 @@ export const ExemptionsSection: React.FC<ExemptionsSectionProps> = ({ exemptions
 
         {/* Other Salary Exemptions */}
         <Collapsible open={otherExemptionsOpen} onOpenChange={setOtherExemptionsOpen}>
-          <CollapsibleTrigger className="flex items-center justify-between w-full p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors">
+          <CollapsibleTrigger className="flex items-center justify-between w-full p-2 sm:p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors">
             <div className="flex items-center gap-2">
-              <Shield className="w-4 h-4 text-emerald-600" />
-              <span className="font-medium text-sm">Other Salary Exemptions</span>
+              <Shield className="w-3 h-3 sm:w-4 sm:h-4 text-emerald-600" />
+              <span className="font-medium text-xs sm:text-sm">Other Salary Exemptions</span>
             </div>
             {otherExemptionsOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </CollapsibleTrigger>
-          <CollapsibleContent className="pt-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <CollapsibleContent className="pt-3 sm:pt-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <InputField
                 label="LTA Exemption (Max claimed)"
                 value={exemptions.ltaExemption}
