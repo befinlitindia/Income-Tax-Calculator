@@ -30,23 +30,23 @@ export const InputField: React.FC<InputFieldProps> = ({
   };
 
   return (
-    <div className={cn("space-y-1.5", className)}>
-      <label className="flex items-center gap-2 text-sm font-medium text-foreground">
+    <div className={cn("space-y-1 sm:space-y-1.5", className)}>
+      <label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-medium text-foreground">
         {label}
         {tooltip && (
-          <span className="inline-flex items-center justify-center w-4 h-4 text-xs rounded-full bg-muted text-muted-foreground cursor-help" title={tooltip}>
+          <span className="inline-flex items-center justify-center w-3.5 h-3.5 sm:w-4 sm:h-4 text-[10px] sm:text-xs rounded-full bg-muted text-muted-foreground cursor-help" title={tooltip}>
             ?
           </span>
         )}
       </label>
       <div className="relative">
-        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">₹</span>
+        <span className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-xs sm:text-sm">₹</span>
         <input
           type="text"
           value={formatDisplayValue(value)}
           onChange={handleChange}
           placeholder={placeholder}
-          className="input-field pl-8"
+          className="input-field pl-6 sm:pl-8 text-sm sm:text-base py-2 sm:py-3"
         />
       </div>
     </div>

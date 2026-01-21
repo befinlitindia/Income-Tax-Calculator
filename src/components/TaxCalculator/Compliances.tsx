@@ -42,38 +42,38 @@ export const Compliances: React.FC = () => {
   ];
 
   return (
-    <div className="card-elevated p-6 animate-slide-up" style={{ animationDelay: '0.4s' }}>
-      <div className="flex items-center gap-3 mb-6">
+    <div className="card-elevated p-4 sm:p-6 animate-slide-up" style={{ animationDelay: '0.4s' }}>
+      <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
         <div className="p-2 rounded-lg bg-orange-100">
-          <ClipboardCheck className="w-5 h-5 text-orange-600" />
+          <ClipboardCheck className="w-4 h-4 sm:w-5 sm:h-5 text-orange-600" />
         </div>
         <div>
-          <h2 className="section-title mb-0">Compliances to Keep in Mind</h2>
-          <p className="text-xs text-muted-foreground mt-1">Important tax compliance requirements for salaried individuals</p>
+          <h2 className="section-title mb-0 text-base sm:text-lg">Compliances to Keep in Mind</h2>
+          <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">Important tax compliance requirements for salaried individuals</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
         {compliances.map((compliance, index) => (
           <div
             key={index}
-            className={`p-4 rounded-lg border transition-colors ${
+            className={`p-3 sm:p-4 rounded-lg border transition-colors ${
               compliance.severity === 'warning' 
                 ? 'border-orange-200 bg-orange-50 hover:bg-orange-100' 
                 : 'border-blue-200 bg-blue-50 hover:bg-blue-100'
             }`}
           >
-            <div className="flex gap-3">
-              <div className={`p-2 rounded-lg h-fit ${
+            <div className="flex gap-2 sm:gap-3">
+              <div className={`p-1.5 sm:p-2 rounded-lg h-fit flex-shrink-0 ${
                 compliance.severity === 'warning' 
                   ? 'bg-orange-200 text-orange-700' 
                   : 'bg-blue-200 text-blue-700'
               }`}>
-                {compliance.icon}
+                <span className="[&>svg]:w-4 [&>svg]:h-4 sm:[&>svg]:w-5 sm:[&>svg]:h-5">{compliance.icon}</span>
               </div>
-              <div className="flex-1">
-                <h4 className="font-medium text-foreground mb-1">{compliance.title}</h4>
-                <p className="text-sm text-muted-foreground">{compliance.description}</p>
+              <div className="flex-1 min-w-0">
+                <h4 className="font-medium text-foreground mb-1 text-sm sm:text-base">{compliance.title}</h4>
+                <p className="text-xs sm:text-sm text-muted-foreground">{compliance.description}</p>
               </div>
             </div>
           </div>
@@ -81,12 +81,12 @@ export const Compliances: React.FC = () => {
       </div>
 
       {/* Important Note */}
-      <div className="mt-6 p-4 rounded-lg bg-amber-50 border border-amber-200">
-        <div className="flex gap-3">
-          <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+      <div className="mt-4 sm:mt-6 p-3 sm:p-4 rounded-lg bg-amber-50 border border-amber-200">
+        <div className="flex gap-2 sm:gap-3">
+          <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600 flex-shrink-0 mt-0.5" />
           <div>
-            <h4 className="font-medium text-amber-800 mb-1">Important Note</h4>
-            <p className="text-sm text-amber-700">
+            <h4 className="font-medium text-amber-800 mb-1 text-sm sm:text-base">Important Note</h4>
+            <p className="text-xs sm:text-sm text-amber-700">
               Non-compliance with tax provisions may result in penalties, interest, and prosecution under the Income Tax Act, 1961. 
               Ensure timely compliance to avoid legal consequences.
             </p>

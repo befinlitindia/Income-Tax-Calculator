@@ -204,35 +204,35 @@ export const Suggestions: React.FC<SuggestionsProps> = ({ oldRegime, newRegime, 
   };
 
   return (
-    <div className="card-elevated p-6 animate-slide-up" style={{ animationDelay: '0.3s' }}>
-      <div className="flex items-center gap-3 mb-6">
+    <div className="card-elevated p-4 sm:p-6 animate-slide-up" style={{ animationDelay: '0.3s' }}>
+      <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
         <div className="p-2 rounded-lg bg-primary/10">
-          <Lightbulb className="w-5 h-5 text-primary" />
+          <Lightbulb className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
         </div>
         <div>
-          <h2 className="section-title mb-0">Tax Saving Suggestions</h2>
-          <p className="text-xs text-muted-foreground mt-1">Personalized recommendations from a tax professional's perspective</p>
+          <h2 className="section-title mb-0 text-base sm:text-lg">Tax Saving Suggestions</h2>
+          <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">Personalized recommendations from a tax professional's perspective</p>
         </div>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-3 sm:space-y-4">
         {displaySuggestions.map((suggestion, index) => (
           <div
             key={index}
-            className="p-4 rounded-lg border border-primary/20 bg-primary/5 hover:bg-primary/10 transition-colors"
+            className="p-3 sm:p-4 rounded-lg border border-primary/20 bg-primary/5 hover:bg-primary/10 transition-colors"
           >
-            <div className="flex gap-4">
-              <div className="p-2 rounded-lg bg-primary/10 h-fit">
-                <span className="text-primary">{suggestion.icon}</span>
+            <div className="flex gap-2 sm:gap-4">
+              <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10 h-fit">
+                <span className="text-primary [&>svg]:w-4 [&>svg]:h-4 sm:[&>svg]:w-5 sm:[&>svg]:h-5">{suggestion.icon}</span>
               </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <h4 className="font-medium text-foreground">{suggestion.title}</h4>
+              <div className="flex-1 min-w-0">
+                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-1">
+                  <h4 className="font-medium text-foreground text-sm sm:text-base">{suggestion.title}</h4>
                   {getPriorityBadge(suggestion.priority)}
                 </div>
-                <p className="text-sm text-muted-foreground">{suggestion.description}</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">{suggestion.description}</p>
                 {suggestion.impact && (
-                  <p className="text-sm font-medium text-accent mt-2">{suggestion.impact}</p>
+                  <p className="text-xs sm:text-sm font-medium text-accent mt-2">{suggestion.impact}</p>
                 )}
               </div>
             </div>
@@ -241,8 +241,8 @@ export const Suggestions: React.FC<SuggestionsProps> = ({ oldRegime, newRegime, 
       </div>
 
       {/* Disclaimer */}
-      <div className="mt-6 p-4 rounded-lg bg-muted/50 border border-border">
-        <p className="text-xs text-muted-foreground">
+      <div className="mt-4 sm:mt-6 p-3 sm:p-4 rounded-lg bg-muted/50 border border-border">
+        <p className="text-[10px] sm:text-xs text-muted-foreground">
           <strong>Disclaimer:</strong> This calculator provides estimates based on the provisions of the Income Tax Act, 1961 as amended by Finance Act 2025 for AY 2026-27. 
           The calculations are for illustrative purposes only. Tax laws are subject to change. Please consult a qualified Chartered Accountant or Tax Professional for personalized advice before making investment or filing decisions.
         </p>

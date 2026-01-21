@@ -32,26 +32,26 @@ export const SalarySection: React.FC<SalarySectionProps> = ({ salary, onChange }
   };
 
   return (
-    <div className="card-elevated p-6 animate-slide-up">
-      <div className="flex items-center gap-3 mb-6">
+    <div className="card-elevated p-4 sm:p-6 animate-slide-up">
+      <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
         <div className="p-2 rounded-lg bg-primary/10">
-          <Briefcase className="w-5 h-5 text-primary" />
+          <Briefcase className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
         </div>
-        <h2 className="section-title mb-0">Salary Breakdown</h2>
+        <h2 className="section-title mb-0 text-base sm:text-lg">Salary Breakdown</h2>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-3 sm:space-y-4">
         {/* Section 17(1) - Salary (Only Basic + DA) */}
         <Collapsible open={section17_1Open} onOpenChange={setSection17_1Open}>
-          <CollapsibleTrigger className="flex items-center justify-between w-full p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors">
+          <CollapsibleTrigger className="flex items-center justify-between w-full p-2 sm:p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors">
             <div className="flex items-center gap-2">
-              <Briefcase className="w-4 h-4 text-primary" />
-              <span className="font-medium text-sm">Section 17(1) - Salary</span>
+              <Briefcase className="w-3 h-3 sm:w-4 sm:h-4 text-primary" />
+              <span className="font-medium text-xs sm:text-sm">Section 17(1) - Salary</span>
             </div>
             {section17_1Open ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </CollapsibleTrigger>
-          <CollapsibleContent className="pt-4 space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <CollapsibleContent className="pt-3 sm:pt-4 space-y-3 sm:space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <InputField
                 label="Basic Salary (Annual)"
                 value={salary.section17_1.basicSalary}
@@ -70,15 +70,15 @@ export const SalarySection: React.FC<SalarySectionProps> = ({ salary, onChange }
 
         {/* Special Allowances - Separate Collapsible */}
         <Collapsible open={specialAllowancesOpen} onOpenChange={setSpecialAllowancesOpen}>
-          <CollapsibleTrigger className="flex items-center justify-between w-full p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors">
+          <CollapsibleTrigger className="flex items-center justify-between w-full p-2 sm:p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors">
             <div className="flex items-center gap-2">
-              <Gift className="w-4 h-4 text-purple-600" />
-              <span className="font-medium text-sm">Special Allowances</span>
+              <Gift className="w-3 h-3 sm:w-4 sm:h-4 text-purple-600" />
+              <span className="font-medium text-xs sm:text-sm">Special Allowances</span>
             </div>
             {specialAllowancesOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </CollapsibleTrigger>
-          <CollapsibleContent className="pt-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <CollapsibleContent className="pt-3 sm:pt-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <InputField
                 label="House Rent Allowance (HRA)"
                 value={salary.specialAllowances.hra}
@@ -133,15 +133,15 @@ export const SalarySection: React.FC<SalarySectionProps> = ({ salary, onChange }
 
         {/* Section 17(2) - Perquisites */}
         <Collapsible open={section17_2Open} onOpenChange={setSection17_2Open}>
-          <CollapsibleTrigger className="flex items-center justify-between w-full p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors">
+          <CollapsibleTrigger className="flex items-center justify-between w-full p-2 sm:p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors">
             <div className="flex items-center gap-2">
-              <Gift className="w-4 h-4 text-amber-600" />
-              <span className="font-medium text-sm">Section 17(2) - Perquisites</span>
+              <Gift className="w-3 h-3 sm:w-4 sm:h-4 text-amber-600" />
+              <span className="font-medium text-xs sm:text-sm">Section 17(2) - Perquisites</span>
             </div>
             {section17_2Open ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </CollapsibleTrigger>
-          <CollapsibleContent className="pt-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <CollapsibleContent className="pt-3 sm:pt-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <InputField
                 label="Rent Free Accommodation"
                 value={salary.section17_2.rentFreeAccommodation}
@@ -178,15 +178,15 @@ export const SalarySection: React.FC<SalarySectionProps> = ({ salary, onChange }
 
         {/* Section 17(3) - Profits in lieu of Salary */}
         <Collapsible open={section17_3Open} onOpenChange={setSection17_3Open}>
-          <CollapsibleTrigger className="flex items-center justify-between w-full p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors">
+          <CollapsibleTrigger className="flex items-center justify-between w-full p-2 sm:p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors">
             <div className="flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-emerald-600" />
-              <span className="font-medium text-sm">Section 17(3) - Profits in lieu of Salary</span>
+              <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-emerald-600" />
+              <span className="font-medium text-xs sm:text-sm">Section 17(3) - Profits in lieu of Salary</span>
             </div>
             {section17_3Open ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </CollapsibleTrigger>
-          <CollapsibleContent className="pt-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <CollapsibleContent className="pt-3 sm:pt-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <InputField
                 label="Bonus / Performance Pay"
                 value={salary.section17_3.bonus}
