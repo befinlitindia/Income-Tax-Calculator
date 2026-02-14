@@ -8,9 +8,6 @@ import { HomeLoanSection } from './HomeLoanSection';
 import { TaxComparison } from './TaxComparison';
 import { Suggestions } from './Suggestions';
 import { Compliances } from './Compliances';
-import { SuggestionsToggle } from './SuggestionsToggle';
-import { ContactForm } from './ContactForm';
-import { ReachUs } from './ReachUs';
 import { Calculator, IndianRupee, Scale, RefreshCw, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { InputField } from './InputField';
@@ -93,7 +90,6 @@ export const TaxCalculator: React.FC = () => {
   const [userProfile, setUserProfile] = useState<UserProfile>(initialUserProfile);
   const [salary, setSalary] = useState<SalaryBreakdown>(initialSalary);
   const [deductions, setDeductions] = useState<Deductions>(initialDeductions);
-  const [showSuggestions, setShowSuggestions] = useState(false);
 
   const grossIncome = useMemo(() => calculateGrossIncome(salary), [salary]);
   const newRegimeResult = useMemo(() => calculateNewRegimeTax(salary, deductions), [salary, deductions]);
@@ -103,7 +99,6 @@ export const TaxCalculator: React.FC = () => {
     setUserProfile(initialUserProfile);
     setSalary(initialSalary);
     setDeductions(initialDeductions);
-    setShowSuggestions(false);
   };
 
   const updateExemptions = (exemptions: SalaryExemptions) => {
@@ -301,25 +296,8 @@ export const TaxCalculator: React.FC = () => {
           {totalSalary > 0 && (
             <>
               <TaxComparison oldRegime={oldRegimeResult} newRegime={newRegimeResult} />
-              
-              {/* Suggestions Toggle */}
-              <SuggestionsToggle 
-                showSuggestions={showSuggestions} 
-                onToggle={() => setShowSuggestions(!showSuggestions)} 
-              />
-              
-              {/* Suggestions - Only shown if user clicks Yes */}
-              {showSuggestions && (
-                <Suggestions oldRegime={oldRegimeResult} newRegime={newRegimeResult} deductions={deductions} salary={salary} userProfile={userProfile} />
-              )}
-              
+              <Suggestions oldRegime={oldRegimeResult} newRegime={newRegimeResult} deductions={deductions} salary={salary} userProfile={userProfile} />
               <Compliances />
-              
-              {/* Contact Form for personalized tax planning */}
-              <ContactForm />
-              
-              {/* Reach Us Section */}
-              <ReachUs />
             </>
           )}
         </div>
